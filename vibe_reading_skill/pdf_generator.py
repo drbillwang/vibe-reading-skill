@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PDF 生成模块
-从 summaries 目录生成专业排版的 PDF 文件
+PDF Generation Module
+Generate professionally formatted PDF files from summaries directory
 
-特性：
-- 自动封面生成：从文件名提取书名和作者，或使用 00_Cover.md 文件
-- 专业排版：使用 Playwright 和 Chromium 生成高质量 PDF
-- 支持目录：自动生成目录页
-- 中文字体支持：完美支持中文排版
+Features:
+- Auto cover generation: Extract book title and author from filename, or use 00_Cover.md file
+- Professional typesetting: Use Playwright and Chromium to generate high-quality PDF
+- Table of contents support: Automatically generate table of contents page
+- Chinese font support: Perfect support for Chinese typesetting
 """
 
 import os
@@ -27,44 +27,45 @@ from .templates import get_pdf_css
 
 
 def clean_text(text: str) -> str:
-    """移除不需要的文字，特别是第一行的Expert Ghost-Reader相关文字"""
+    """Remove unwanted text, especially Expert Ghost-Reader related text in the first line"""
     lines = text.split('\n')
     
-    # 检查并移除第一行的Expert Ghost-Reader相关文字
+    # Check and remove Expert Ghost-Reader related text in the first line
     if lines:
         first_line = lines[0].strip()
-        # 匹配各种变体
+        # Match various variants
         patterns = [
-            r'好的，Expert Ghost-Reader 已就位。这是对该章节的["""]高保真浓缩版["""]重写。',
-            r'好的，Expert Ghost-Reader 已就位。.*?重写。',
-            r'Expert Ghost-Reader.*?重写。',
-            r'好的，.*?Expert Ghost-Reader.*?已就位.*?重写。',
-            r'Expert Ghost-Reader.*?已就位.*?重写。',
+            r'Okay, Expert Ghost-Reader is ready. This is a ["""]high-fidelity condensed version["""] rewrite of this chapter.',
+            r'Okay, Expert Ghost-Reader is ready.*?rewrite.',
+            r'Expert Ghost-Reader.*?rewrite.',
+            r'Okay,.*?Expert Ghost-Reader.*?ready.*?rewrite.',
+            r'Expert Ghost-Reader.*?ready.*?rewrite.',
         ]
         
         for pattern in patterns:
             if re.match(pattern, first_line):
-                lines = lines[1:]  # 移除第一行
+                lines = lines[1:]  # Remove first line
                 break
     
-    # 重新组合文本
+    # Recombine text
     text = '\n'.join(lines)
     
-    # 移除可能残留的多个空行
+    # Remove possible residual multiple empty lines
     text = re.sub(r'\n{3,}', '\n\n', text)
     
     return text.strip()
 
 
 def standardize_title(title: str) -> str:
-    """标准化标题，移除'第x章'或'第x章：'格式"""
+    """Standardize title, remove 'Chapter X' or 'Chapter X:' format"""
     title = re.sub(r'^第[一二三四五六七八九十百千万\d]+章[：:\s]*', '', title)
     title = re.sub(r'^第\d+章[：:\s]*', '', title)
+    title = re.sub(r'^Chapter\s+\d+[:\s]*', '', title, flags=re.IGNORECASE)
     return title.strip()
 
 
 def extract_title_from_content(content: str) -> Optional[str]:
-    """从内容中提取标题"""
+    """Extract title from content"""
     lines = content.split('\n')
     for line in lines:
         line = line.strip()
@@ -75,29 +76,29 @@ def extract_title_from_content(content: str) -> Optional[str]:
 
 
 def extract_book_info_from_filename(filename: str) -> Tuple[str, Optional[str]]:
-    """从文件名提取书名和作者信息
+    """Extract book title and author information from filename
     
     Args:
-        filename: 文件名（可以包含路径）
+        filename: Filename (can include path)
     
     Returns:
-        (book_title, book_author): 书名和作者（作者可能为 None）
+        (book_title, book_author): Book title and author (author may be None)
     """
-    # 移除扩展名
+    # Remove extension
     name = Path(filename).stem
     
-    # 尝试提取作者（通常在 -- 或 - 之后）
+    # Try to extract author (usually after -- or -)
     book_title = name
     book_author = None
     
-    # 尝试匹配格式: "书名 -- 作者" 或 "书名 - 作者"
+    # Try to match format: "Book Title -- Author" or "Book Title - Author"
     if ' -- ' in name:
         parts = name.split(' -- ', 1)
         book_title = parts[0].strip()
         if len(parts) > 1:
             author_part = parts[1].strip()
-            # 移除可能的额外信息（如出版社、ISBN等）
-            # 通常作者名在第一个逗号或分号之前
+            # Remove possible additional information (like publisher, ISBN, etc.)
+            # Usually author name is before the first comma or semicolon
             if ',' in author_part:
                 book_author = author_part.split(',')[0].strip()
             elif ';' in author_part:
@@ -116,8 +117,8 @@ def extract_book_info_from_filename(filename: str) -> Tuple[str, Optional[str]]:
             else:
                 book_author = author_part
     
-    # 清理书名（移除可能的额外信息）
-    # 如果书名太长，截取前50个字符
+    # Clean book title (remove possible additional information)
+    # If book title is too long, truncate to first 50 characters
     if len(book_title) > 50:
         book_title = book_title[:50] + '...'
     
@@ -125,21 +126,21 @@ def extract_book_info_from_filename(filename: str) -> Tuple[str, Optional[str]]:
 
 
 def get_sorted_summary_files(directory: Path, include_all_md: bool = False) -> List[Tuple[str, Path]]:
-    """获取按顺序排列的 summary 文件列表
+    """Get sorted summary file list
     
     Args:
-        directory: 目录路径
-        include_all_md: 如果为 True，处理所有 .md 文件；如果为 False，只处理 *_summary.md 文件
+        directory: Directory path
+        include_all_md: If True, process all .md files; if False, only process *_summary.md files
     
     Returns:
-        文件列表，每个元素是 (filename, filepath) 元组
+        File list, each element is a (filename, filepath) tuple
     """
     files = []
     for file in sorted(os.listdir(directory)):
         if file.startswith('.'):
             continue
         if file == '00_Cover.md' or file == '00_Cover':
-            continue  # 跳过封面文件
+            continue  # Skip cover file
         if include_all_md:
             if not file.endswith('.md'):
                 continue
@@ -154,14 +155,14 @@ def get_sorted_summary_files(directory: Path, include_all_md: bool = False) -> L
 
 
 def markdown_to_html(markdown_text: str, is_cover: bool = False) -> str:
-    """将Markdown转换为HTML"""
-    # 清理文本
+    """Convert Markdown to HTML"""
+    # Clean text
     markdown_text = clean_text(markdown_text)
     
-    # 标准化标题
+    # Standardize title
     title = extract_title_from_content(markdown_text)
     if title and not is_cover:
-        # 移除原标题行
+        # Remove original title line
         lines = markdown_text.split('\n')
         new_lines = []
         title_found = False
@@ -171,20 +172,20 @@ def markdown_to_html(markdown_text: str, is_cover: bool = False) -> str:
                 continue
             new_lines.append(line)
         markdown_text = '\n'.join(new_lines)
-        # 添加标准化后的标题
+        # Add standardized title
         markdown_text = f"# {title}\n\n{markdown_text}"
     
-    # 转换为HTML
+    # Convert to HTML
     html = markdown(markdown_text, extensions=['extra', 'codehilite', 'tables'])
     return html
 
 
 def get_html_template() -> str:
-    """返回HTML模板"""
+    """Return HTML template"""
     pdf_css = get_pdf_css()
     
     return f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -210,24 +211,24 @@ def generate_pdf_from_summaries(
     include_all_md: bool = False
 ) -> bool:
     """
-    从 summaries 目录生成 PDF
+    Generate PDF from summaries directory
     
     Args:
-        summaries_dir: summaries 目录路径
-        output_path: 输出 PDF 文件路径
-        book_title: 书籍标题（可选，如果为 None 且 auto_extract_title=True，会尝试从文件名提取）
-        book_subtitle: 书籍副标题（可选）
-        book_author: 作者（可选，如果为 None 且 auto_extract_title=True，会尝试从文件名提取）
-        skip_files: 要跳过的文件名关键词列表（如 ['Front_Matter', 'Authors_Note']）
-        auto_extract_title: 是否自动从文件名提取书名和作者（默认 True）
-        include_all_md: 是否处理所有 .md 文件（默认 False，只处理 *_summary.md）
+        summaries_dir: Summaries directory path
+        output_path: Output PDF file path
+        book_title: Book title (optional, if None and auto_extract_title=True, will try to extract from filename)
+        book_subtitle: Book subtitle (optional)
+        book_author: Author (optional, if None and auto_extract_title=True, will try to extract from filename)
+        skip_files: List of filename keywords to skip (e.g., ['Front_Matter', 'Authors_Note'])
+        auto_extract_title: Whether to automatically extract book title and author from filename (default True)
+        include_all_md: Whether to process all .md files (default False, only process *_summary.md)
     
     Returns:
-        bool: 是否成功生成
+        bool: Whether generation was successful
     """
     if not PLAYWRIGHT_AVAILABLE:
         raise ImportError(
-            "playwright 未安装。请运行:\n"
+            "playwright is not installed. Please run:\n"
             "  pip install playwright\n"
             "  playwright install chromium"
         )
@@ -235,7 +236,7 @@ def generate_pdf_from_summaries(
     if skip_files is None:
         skip_files = ['Front_Matter', 'Authors_Note']
     
-    # 如果没有提供书名且启用自动提取，尝试从父目录的书籍文件提取
+    # If book title not provided and auto-extract enabled, try to extract from book file in parent directory
     if (not book_title or not book_author) and auto_extract_title:
         script_dir = summaries_dir.parent
         for f in script_dir.glob("*.txt"):
@@ -254,22 +255,22 @@ def generate_pdf_from_summaries(
                     book_author = extracted_author
                 break
     
-    # 如果还是没有，使用默认值
+    # If still not found, use default value
     if not book_title:
-        book_title = "书籍摘要"
+        book_title = "Book Summary"
     
-    # 获取所有 summary 文件
+    # Get all summary files
     files = get_sorted_summary_files(summaries_dir, include_all_md=include_all_md)
     
     if not files:
         if include_all_md:
-            raise ValueError(f"在 {summaries_dir} 中未找到任何 .md 文件")
+            raise ValueError(f"No .md files found in {summaries_dir}")
         else:
-            raise ValueError(f"在 {summaries_dir} 中未找到任何 *_summary.md 文件")
+            raise ValueError(f"No *_summary.md files found in {summaries_dir}")
     
-    print(f"找到 {len(files)} 个文件")
+    print(f"Found {len(files)} files")
     
-    # 检查是否有 00_Cover 文件
+    # Check if 00_Cover file exists
     cover_file_found = False
     cover_html = None
     cover_file_md = summaries_dir / "00_Cover.md"
@@ -291,9 +292,9 @@ def generate_pdf_from_summaries(
                         cover_html += f'<div class="cover-subtitle">{line}</div>'
                 cover_html += '</div>'
                 cover_file_found = True
-                print("  ✓ 使用 00_Cover.md 文件作为封面")
+                print("  ✓ Using 00_Cover.md file as cover")
         except Exception as e:
-            print(f"  ⚠️  读取封面文件失败: {e}")
+            print(f"  ⚠️  Failed to read cover file: {e}")
     elif cover_file_no_ext.exists():
         try:
             with open(cover_file_no_ext, 'r', encoding='utf-8') as f:
@@ -310,15 +311,15 @@ def generate_pdf_from_summaries(
                         cover_html += f'<div class="cover-subtitle">{line}</div>'
                 cover_html += '</div>'
                 cover_file_found = True
-                print("  ✓ 使用 00_Cover 文件作为封面")
+                print("  ✓ Using 00_Cover file as cover")
         except Exception as e:
-            print(f"  ⚠️  读取封面文件失败: {e}")
+            print(f"  ⚠️  Failed to read cover file: {e}")
     
-    # 收集目录项（跳过功能性章节）
+    # Collect table of contents items (skip functional chapters)
     toc_items = []
-    print("\n第一遍：收集标题...")
+    print("\nFirst pass: Collecting titles...")
     for filename, filepath in files:
-        # 跳过指定的文件
+        # Skip specified files
         should_skip = any(keyword in filename for keyword in skip_files)
         if should_skip:
             continue
@@ -330,13 +331,13 @@ def generate_pdf_from_summaries(
             if title:
                 toc_items.append(title)
         except Exception as e:
-            print(f"读取文件 {filename} 时出错: {e}")
+            print(f"Error reading file {filename}: {e}")
     
-    # 构建HTML内容
-    print("\n第二遍：生成HTML内容...")
+    # Build HTML content
+    print("\nSecond pass: Generating HTML content...")
     html_parts = []
     
-    # 封面（如果没有找到 00_Cover 文件，自动生成）
+    # Cover (if 00_Cover file not found, auto-generate)
     if not cover_file_found:
         cover_html = '<div class="cover">'
         cover_html += f'<div class="cover-title">{book_title}</div>'
@@ -347,39 +348,39 @@ def generate_pdf_from_summaries(
         cover_html += '<div class="cover-subtitle" style="margin-top: 60pt;"></div>'
         cover_html += '<div class="cover-subtitle">Summarized by Vibe Reading</div>'
         cover_html += '</div>'
-        print(f"  ✓ 自动生成封面: {book_title}")
+        print(f"  ✓ Auto-generated cover: {book_title}")
         if book_author:
-            print(f"    作者: {book_author}")
+            print(f"    Author: {book_author}")
     
     html_parts.append(cover_html)
     
-    # 目录
+    # Table of contents
     if toc_items:
         toc_html = '<div class="toc">'
-        toc_html += '<div class="toc-title">目录</div>'
+        toc_html += '<div class="toc-title">Table of Contents</div>'
         for title in toc_items:
             toc_html += f'<div class="toc-item">{title}</div>'
         toc_html += '</div>'
         html_parts.append(toc_html)
     
-    # 正文内容
+    # Main content
     chapter_count = 0
     for idx, (filename, filepath) in enumerate(files):
-        # 跳过卷首内容（已在封面显示）
+        # Skip front matter (already shown in cover)
         should_skip = any(keyword in filename for keyword in skip_files)
         if should_skip:
             continue
         
-        print(f"处理文件 {idx+1}/{len(files)}: {filename}")
+        print(f"Processing file {idx+1}/{len(files)}: {filename}")
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 转换为HTML
+            # Convert to HTML
             html_content = markdown_to_html(content)
             
-            # 添加章节分隔（从第一个非功能性章节开始）
+            # Add chapter separator (starting from first non-functional chapter)
             if chapter_count > 0:
                 html_parts.append(f'<div class="chapter">{html_content}</div>')
             else:
@@ -388,16 +389,16 @@ def generate_pdf_from_summaries(
             chapter_count += 1
                 
         except Exception as e:
-            print(f"处理文件 {filename} 时出错: {e}")
+            print(f"Error processing file {filename}: {e}")
             continue
     
-    # 合并所有HTML
+    # Merge all HTML
     template = get_html_template()
-    # 替换占位符，避免CSS大括号冲突
+    # Replace placeholder, avoid CSS brace conflicts
     full_html = template.replace('{{content}}', ''.join(html_parts))
     
-    # 使用Playwright生成PDF
-    print("\n生成PDF...")
+    # Generate PDF using Playwright
+    print("\nGenerating PDF...")
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
@@ -415,21 +416,21 @@ def generate_pdf_from_summaries(
                 },
                 print_background=True,
                 display_header_footer=True,
-                header_template='<div></div>',  # 空页眉，不显示页码
+                header_template='<div></div>',  # Empty header, no page number
                 footer_template='<div style="font-size:9pt;color:#666;text-align:center;width:100%;">— <span class="pageNumber"></span> —</div>'
             )
             
             browser.close()
         
-        print(f"\nPDF已生成: {output_path}")
-        print(f"共 {len(toc_items)} 个章节")
+        print(f"\nPDF generated: {output_path}")
+        print(f"Total {len(toc_items)} chapters")
         return True
     except Exception as e:
         error_msg = str(e)
-        # 检查是否是浏览器未安装的错误
+        # Check if it's a browser not installed error
         if "Executable doesn't exist" in error_msg or "chromium" in error_msg.lower():
             raise RuntimeError(
-                "Chromium 浏览器未安装。请运行:\n"
+                "Chromium browser is not installed. Please run:\n"
                 "  playwright install chromium"
             )
         else:
@@ -447,31 +448,31 @@ def generate_pdf_from_combined_content(
     summaries_dir: Optional[Path] = None
 ) -> bool:
     """
-    从合并的内容字符串生成 PDF（用于 main.py 中的现有流程）
+    Generate PDF from combined content string (for existing flow in main.py)
     
     Args:
-        content: 合并后的 Markdown 内容
-        output_path: 输出 PDF 文件路径
-        book_title: 书籍标题
-        book_author: 作者
-        model_name: 模型名称
-        gen_date: 生成日期
-        toc_items: 目录项列表（可选）
-        summaries_dir: summaries 目录路径（可选，用于查找 00_Cover 文件）
+        content: Combined Markdown content
+        output_path: Output PDF file path
+        book_title: Book title
+        book_author: Author
+        model_name: Model name
+        gen_date: Generation date
+        toc_items: Table of contents item list (optional)
+        summaries_dir: Summaries directory path (optional, for finding 00_Cover file)
     
     Returns:
-        bool: 是否成功生成
+        bool: Whether generation was successful
     """
     if not PLAYWRIGHT_AVAILABLE:
         raise ImportError(
-            "playwright 未安装。请运行:\n"
+            "playwright is not installed. Please run:\n"
             "  pip install playwright\n"
             "  playwright install chromium"
         )
     
     from .templates import get_pdf_css
     
-    # 检查是否有 00_Cover 文件
+    # Check if 00_Cover file exists
     cover_html = None
     if summaries_dir:
         cover_file_md = summaries_dir / "00_Cover.md"
@@ -492,9 +493,9 @@ def generate_pdf_from_combined_content(
                         else:
                             cover_html += f'<div class="cover-subtitle">{line}</div>'
                     cover_html += '</div>'
-                    print("  ✓ 使用 00_Cover.md 文件作为封面")
+                    print("  ✓ Using 00_Cover.md file as cover")
             except Exception as e:
-                print(f"  ⚠️  读取封面文件失败: {e}")
+                print(f"  ⚠️  Failed to read cover file: {e}")
         elif cover_file_no_ext.exists():
             try:
                 with open(cover_file_no_ext, 'r', encoding='utf-8') as f:
@@ -510,11 +511,11 @@ def generate_pdf_from_combined_content(
                         else:
                             cover_html += f'<div class="cover-subtitle">{line}</div>'
                     cover_html += '</div>'
-                    print("  ✓ 使用 00_Cover 文件作为封面")
+                    print("  ✓ Using 00_Cover file as cover")
             except Exception as e:
-                print(f"  ⚠️  读取封面文件失败: {e}")
+                print(f"  ⚠️  Failed to read cover file: {e}")
     
-    # 如果没有找到封面文件，使用默认封面
+    # If no cover file found, use default cover
     if not cover_html:
         cover_html = f'''<div class="cover">
     <div class="cover-title">{book_title}</div>
@@ -524,42 +525,42 @@ def generate_pdf_from_combined_content(
     <div class="cover-subtitle">{gen_date}</div>
 </div>'''
     
-    # 生成目录
+    # Generate table of contents
     toc_html = ''
     if toc_items:
         toc_html = '<div class="toc">'
-        toc_html += '<div class="toc-title">目录</div>'
+        toc_html += '<div class="toc-title">Table of Contents</div>'
         for title in toc_items:
             toc_html += f'<div class="toc-item">{title}</div>'
         toc_html += '</div>'
     
-    # 清理内容
+    # Clean content
     content = clean_text(content)
     
-    # 转换 Markdown 为 HTML
+    # Convert Markdown to HTML
     html_body = markdown(content, extensions=['extra', 'codehilite', 'tables'])
     
-    # 处理章节分隔：为每个 h1 添加 chapter 类（除了第一个）
+    # Handle chapter separation: add chapter class to each h1 (except the first)
     h1_pattern = r'<h1>(.*?)</h1>'
     h1_matches = list(re.finditer(h1_pattern, html_body))
     
     if len(h1_matches) > 1:
-        # 从第二个 h1 开始添加 chapter 类
+        # Add chapter class starting from second h1
         offset = 0
-        for i, match in enumerate(h1_matches[1:], start=1):  # 跳过第一个
+        for i, match in enumerate(h1_matches[1:], start=1):  # Skip first
             start_pos = match.start() + offset
-            # 在 h1 前添加 <div class="chapter">
+            # Add <div class="chapter"> before h1
             html_body = html_body[:start_pos] + '<div class="chapter">' + html_body[start_pos:]
             offset += len('<div class="chapter">')
-            # 在对应的 </h1> 后添加 </div>
+            # Add </div> after corresponding </h1>
             end_pos = match.end() + offset
             html_body = html_body[:end_pos] + '</div>' + html_body[end_pos:]
             offset += len('</div>')
     
-    # 生成完整 HTML
+    # Generate complete HTML
     pdf_css = get_pdf_css()
     html_with_styles = f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -575,7 +576,7 @@ def generate_pdf_from_combined_content(
 </body>
 </html>"""
     
-    # 使用 Playwright 生成 PDF
+    # Generate PDF using Playwright
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
@@ -593,7 +594,7 @@ def generate_pdf_from_combined_content(
                 },
                 print_background=True,
                 display_header_footer=True,
-                header_template='<div></div>',  # 空页眉
+                header_template='<div></div>',  # Empty header
                 footer_template='<div style="font-size:9pt;color:#666;text-align:center;width:100%;">— <span class="pageNumber"></span> —</div>'
             )
             
@@ -602,10 +603,10 @@ def generate_pdf_from_combined_content(
         return True
     except Exception as e:
         error_msg = str(e)
-        # 检查是否是浏览器未安装的错误
+        # Check if it's a browser not installed error
         if "Executable doesn't exist" in error_msg or "chromium" in error_msg.lower():
             raise RuntimeError(
-                "Chromium 浏览器未安装。请运行:\n"
+                "Chromium browser is not installed. Please run:\n"
                 "  playwright install chromium"
             )
         else:

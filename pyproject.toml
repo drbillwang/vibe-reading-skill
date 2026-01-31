@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vibe-reading-skill"
 version = "0.1.0"
-description = "智能阅读分析 Agent Skill - AI 驱动的书籍阅读分析工具"
+description = "Intelligent Reading Analysis Agent Skill - AI-driven book reading analysis tool"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "Apache-2.0"}
@@ -59,10 +59,10 @@ Repository = "https://github.com/yourusername/vibe-reading-skill.git"
 Issues = "https://github.com/yourusername/vibe-reading-skill/issues"
 
 [tool.setuptools]
-packages = ["vibe_reading_skill_CN"]
+packages = ["vibe_reading_skill"]
 
 [tool.setuptools.package-data]
-"vibe_reading_skill_CN" = [
+"vibe_reading_skill" = [
     "SKILL.md",
     "skill.json",
 ]

@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 Vibe Reading Skill - Templates
-存放所有 HTML/CSS/JavaScript 模板
+Store all HTML/CSS/JavaScript templates
 """
 
 
 def get_pdf_css() -> str:
-    """返回 PDF 专业排版 CSS（用于 Playwright）"""
+    """Return PDF professional typesetting CSS (for Playwright)"""
     return """
 @page {
     size: A4;
@@ -32,7 +32,7 @@ body {
     text-align: justify;
 }
 
-/* 封面样式 */
+/* Cover styles */
 .cover {
     page-break-after: always;
     text-align: center;
@@ -60,7 +60,7 @@ body {
     line-height: 1.6;
 }
 
-/* 目录样式 */
+/* Table of contents styles */
 .toc {
     page-break-after: always;
     padding: 20pt 0;
@@ -84,7 +84,7 @@ body {
     text-indent: 0;
 }
 
-/* 章节标题 */
+/* Chapter titles */
 h1 {
     font-family: "PingFang SC", "Hiragino Sans GB", "STHeiti", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
     font-size: 26pt;
@@ -118,20 +118,20 @@ h3 {
     text-indent: 0;
 }
 
-/* 段落样式 */
+/* Paragraph styles */
 p {
     font-family: "PingFang SC", "Hiragino Sans GB", "STSong", "SimSun", "Source Han Serif SC", serif;
     font-size: 11pt;
     line-height: 1.7;
     color: #1a1a1a;
     text-align: justify;
-    text-indent: 2em;  /* 首行缩进2字符 */
+    text-indent: 2em;  /* First line indent 2 characters */
     margin-bottom: 8pt;
     orphans: 2;
     widows: 2;
 }
 
-/* 列表样式 */
+/* List styles */
 ul, ol {
     margin: 10pt 0 10pt 30pt;
     padding-left: 0;
@@ -151,7 +151,7 @@ ul ul, ol ol, ul ol, ol ul {
     margin-top: 6pt;
 }
 
-/* 引用块样式 */
+/* Blockquote styles */
 blockquote {
     font-family: "PingFang SC", "Hiragino Sans GB", "STSong", "SimSun", serif;
     font-size: 10pt;
@@ -166,7 +166,7 @@ blockquote {
     border-radius: 2pt;
 }
 
-/* 代码样式 */
+/* Code styles */
 code {
     font-family: "Courier New", "Monaco", "Consolas", "Source Code Pro", monospace;
     font-size: 10pt;
@@ -195,7 +195,7 @@ pre code {
     border: none;
 }
 
-/* 强调样式 */
+/* Emphasis styles */
 strong, b {
     font-weight: bold;
     color: #000000;
@@ -205,22 +205,22 @@ em, i {
     font-style: italic;
 }
 
-/* 章节分隔 */
+/* Chapter separator */
 .chapter {
     page-break-before: always;
 }
 
-/* 避免在标题后分页 */
+/* Avoid page break after title */
 h1, h2, h3 {
     page-break-after: avoid;
 }
 
-/* 避免在段落中间分页 */
+/* Avoid page break in middle of paragraph */
 p {
     page-break-inside: avoid;
 }
 
-/* 列表项避免分页 */
+/* List items avoid page break */
 li {
     page-break-inside: avoid;
 }
@@ -228,9 +228,9 @@ li {
 
 
 def get_html_css() -> str:
-    """返回专业 HTML CSS 样式"""
+    """Return professional HTML CSS styles"""
     return """
-        /* CSS 变量定义 */
+        /* CSS variable definitions */
         :root {
             --primary-color: #2563eb;
             --primary-hover: #1d4ed8;
@@ -251,7 +251,7 @@ def get_html_css() -> str:
             --radius-lg: 12px;
         }
         
-        /* 重置样式 */
+        /* Reset styles */
         * {
             margin: 0;
             padding: 0;
@@ -266,7 +266,7 @@ def get_html_css() -> str:
             font-size: 16px;
         }
         
-        /* 容器布局 */
+        /* Container layout */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -276,7 +276,7 @@ def get_html_css() -> str:
             gap: 24px;
         }
         
-        /* 侧边栏 */
+        /* Sidebar */
         .sidebar {
             background: var(--bg-primary);
             padding: 24px;
@@ -353,7 +353,7 @@ def get_html_css() -> str:
             border-left-color: var(--primary-hover);
         }
         
-        /* 主内容区 */
+        /* Main content area */
         .main-content {
             background: var(--bg-primary);
             padding: 40px;
@@ -367,7 +367,7 @@ def get_html_css() -> str:
             margin: 0 auto;
         }
         
-        /* 欢迎界面 */
+        /* Welcome screen */
         .welcome-screen {
             text-align: center;
             padding: 60px 20px;
@@ -404,7 +404,7 @@ def get_html_css() -> str:
             font-size: 32px;
         }
         
-        /* Markdown 内容样式 */
+        /* Markdown content styles */
         .article-content h1 {
             font-size: 28px;
             font-weight: 700;
@@ -499,7 +499,7 @@ def get_html_css() -> str:
             font-style: italic;
         }
         
-        /* 问答区 */
+        /* Q&A area */
         .qa-section {
             margin-top: 60px;
             padding-top: 40px;
@@ -628,7 +628,7 @@ def get_html_css() -> str:
             color: #d32f2f;
         }
         
-        /* 返回顶部按钮 */
+        /* Back to top button */
         .back-to-top {
             position: fixed;
             bottom: 32px;
@@ -652,7 +652,7 @@ def get_html_css() -> str:
             box-shadow: var(--shadow-lg);
         }
         
-        /* 响应式设计 */
+        /* Responsive design */
         @media (max-width: 1024px) {
             .container {
                 grid-template-columns: 220px 1fr;
@@ -707,11 +707,11 @@ def get_html_css() -> str:
 
 
 def get_pdf_html_template(html_body: str, book_title: str, book_author: str, model_name: str, gen_date: str, toc_items: list = None) -> str:
-    """生成包含封面和样式的 PDF HTML（用于 Playwright）"""
-    # 获取 CSS
+    """Generate PDF HTML with cover and styles (for Playwright)"""
+    # Get CSS
     pdf_css = get_pdf_css()
     
-    # 生成封面（参考 00_Cover 文件格式）
+    # Generate cover (refer to 00_Cover file format)
     cover_html = f'''<div class="cover">
     <div class="cover-title">{book_title}</div>
     <div class="cover-subtitle">by {book_author}</div>
@@ -720,18 +720,18 @@ def get_pdf_html_template(html_body: str, book_title: str, book_author: str, mod
     <div class="cover-subtitle">{gen_date}</div>
 </div>'''
     
-    # 生成目录
+    # Generate table of contents
     toc_html = ''
     if toc_items:
         toc_html = '<div class="toc">'
-        toc_html += '<div class="toc-title">目录</div>'
+        toc_html += '<div class="toc-title">Table of Contents</div>'
         for title in toc_items:
             toc_html += f'<div class="toc-item">{title}</div>'
         toc_html += '</div>'
     
-    # 生成完整 HTML
+    # Generate complete HTML
     return f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -749,9 +749,9 @@ def get_pdf_html_template(html_body: str, book_title: str, book_author: str, mod
 
 
 def get_html_interface_template(html_css: str, html_javascript: str, summary_count: int) -> str:
-    """生成 HTML 交互界面模板"""
+    """Generate HTML interactive interface template"""
     return f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -765,14 +765,14 @@ def get_html_interface_template(html_css: str, html_javascript: str, summary_cou
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>📚 章节列表</h2>
+                <h2>📚 Chapter List</h2>
                 <div class="progress-indicator" id="progressIndicator">
                     <span>0 / {summary_count}</span>
                 </div>
             </div>
             <nav>
                 <ul class="chapter-list" id="chapterList">
-                    <!-- 章节列表将通过 JavaScript 动态生成 -->
+                    <!-- Chapter list will be dynamically generated by JavaScript -->
                 </ul>
             </nav>
         </aside>
@@ -780,20 +780,20 @@ def get_html_interface_template(html_css: str, html_javascript: str, summary_cou
         <main class="main-content">
             <article id="chapterContent" class="article-content">
                 <div class="welcome-screen">
-                    <h1>欢迎使用 Vibe Reading</h1>
-                    <p>请从左侧选择章节开始阅读。</p>
+                    <h1>Welcome to Vibe Reading</h1>
+                    <p>Please select a chapter from the left to start reading.</p>
                     <div class="welcome-features">
                         <div class="feature-item">
                             <span class="feature-icon">📖</span>
-                            <span>逐章深度分析</span>
+                            <span>Chapter-by-chapter deep analysis</span>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">💬</span>
-                            <span>智能问答讨论</span>
+                            <span>Intelligent Q&A discussion</span>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">🔗</span>
-                            <span>上下文连贯理解</span>
+                            <span>Contextual coherent understanding</span>
                         </div>
                     </div>
                 </div>
@@ -801,19 +801,19 @@ def get_html_interface_template(html_css: str, html_javascript: str, summary_cou
             
             <section class="qa-section">
                 <div class="qa-header">
-                    <h3>💬 问答讨论</h3>
-                    <p class="qa-hint">输入关于本章的问题，AI 会基于上下文回答</p>
+                    <h3>💬 Q&A Discussion</h3>
+                    <p class="qa-hint">Enter questions about this chapter, AI will answer based on context</p>
                 </div>
                 <div class="qa-input-group">
                     <input 
                         type="text" 
                         class="question-input" 
                         id="questionInput" 
-                        placeholder="例如：这一章的核心观点是什么？"
+                        placeholder="e.g., What is the core viewpoint of this chapter?"
                         onkeypress="if(event.key==='Enter') askQuestion()"
                     >
                     <button class="submit-btn" onclick="askQuestion()">
-                        <span class="btn-text">提问</span>
+                        <span class="btn-text">Ask</span>
                         <span class="btn-icon">→</span>
                     </button>
                 </div>
@@ -835,7 +835,7 @@ def get_html_interface_template(html_css: str, html_javascript: str, summary_cou
 
 def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, chapter_titles: dict, 
                                   api_key: str, model_name: str) -> str:
-    """生成 HTML JavaScript 代码"""
+    """Generate HTML JavaScript code"""
     import json
     return f"""
         const summaries = {json.dumps(summaries_data, ensure_ascii=False)};
@@ -846,37 +846,37 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
         let currentChapterIndex = 0;
         let currentChapterKey = null;
         
-        // Markdown 渲染函数（使用 marked.js 库）
-        // 如果没有 marked.js，使用简单实现
+        // Markdown rendering function (using marked.js library)
+        // If marked.js is not available, use simple implementation
         function renderMarkdown(markdown) {{
             if (typeof marked !== 'undefined') {{
                 return marked.parse(markdown);
             }}
             
-            // 简单实现作为后备
+            // Simple implementation as fallback
             let html = markdown;
             
-            // 代码块（先处理，避免被其他规则影响）
+            // Code blocks (process first to avoid being affected by other rules)
             html = html.replace(/```([\\s\\S]*?)```/g, '<pre><code>$1</code></pre>');
             html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
             
-            // 标题
+            // Headings
             html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
             html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
             html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
             html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
             
-            // 粗体和斜体
+            // Bold and italic
             html = html.replace(/\\*\\*([^\\*]+)\\*\\*/g, '<strong>$1</strong>');
             html = html.replace(/\\*([^\\*]+)\\*/g, '<em>$1</em>');
             
-            // 引用
+            // Blockquotes
             html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
             
-            // 链接
+            // Links
             html = html.replace(/\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, '<a href="$2">$1</a>');
             
-            // 段落（将双换行转换为段落）
+            // Paragraphs (convert double newlines to paragraphs)
             const lines = html.split('\\n');
             let result = [];
             let currentPara = [];
@@ -905,13 +905,13 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
             return result.join('\\n');
         }}
         
-        // 生成章节列表
+        // Generate chapter list
         const chapterList = document.getElementById('chapterList');
         Object.keys(summaries).forEach((key, index) => {{
             const li = document.createElement('li');
             const a = document.createElement('a');
             a.href = '#';
-            a.textContent = chapterTitles[key] || `第 ${{index + 1}} 章`;
+            a.textContent = chapterTitles[key] || `Chapter ${{index + 1}}`;
             a.onclick = (e) => {{
                 e.preventDefault();
                 loadChapter(key, index);
@@ -921,17 +921,17 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
         }});
         
         function loadChapter(key, index) {{
-            // 渲染 Markdown 内容
+            // Render Markdown content
             const markdown = summaries[key];
             const html = renderMarkdown(markdown);
             const contentDiv = document.getElementById('chapterContent');
             contentDiv.innerHTML = html;
             
-            // 更新当前章节
+            // Update current chapter
             currentChapterIndex = index;
             currentChapterKey = key;
             
-            // 更新活动状态
+            // Update active state
             document.querySelectorAll('.chapter-list a').forEach((a, i) => {{
                 if (i === index) {{
                     a.classList.add('active');
@@ -940,14 +940,14 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
                 }}
             }});
             
-            // 更新进度
+            // Update progress
             updateProgress(index + 1, Object.keys(summaries).length);
             
-            // 清空问答区域
+            // Clear Q&A area
             document.getElementById('answer').innerHTML = '';
             document.getElementById('questionInput').value = '';
             
-            // 滚动到顶部
+            // Scroll to top
             window.scrollTo({{ top: 0, behavior: 'smooth' }});
         }}
         
@@ -959,57 +959,67 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
         async function askQuestion() {{
             const question = document.getElementById('questionInput').value.trim();
             if (!question) {{
-                alert('请输入问题');
+                alert('Please enter a question');
                 return;
             }}
             
             if (!currentChapterKey) {{
-                alert('请先选择一个章节');
+                alert('Please select a chapter first');
                 return;
             }}
             
             const answerDiv = document.getElementById('answer');
             
-            // 添加加载提示（追加到现有内容后面）
+            // Add loading indicator (append to existing content)
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'answer loading';
-            loadingDiv.innerHTML = '<p>正在思考...</p>';
+            loadingDiv.innerHTML = '<p>Thinking...</p>';
             answerDiv.appendChild(loadingDiv);
             
-            // 滚动到底部
+            // Scroll to bottom
             answerDiv.scrollTop = answerDiv.scrollHeight;
             
             try {{
-                // 构建上下文：当前章节原文、当前章节总结、前一章、后一章的总结
+                // Build context: only chapter summaries (no original text to reduce context window size)
                 const chapterKeys = Object.keys(summaries);
                 const currentIndex = chapterKeys.indexOf(currentChapterKey);
                 
+                // Limit context window size to avoid 429 errors
+                const MAX_SUMMARY_LENGTH = 2000; // Limit each summary to 2000 characters
+                
                 let context = '';
                 
-                // 添加当前章节原文（最重要）
-                if (chapterOriginals[currentChapterKey]) {{
-                    context += `当前章节原文：\\n${{chapterOriginals[currentChapterKey]}}\\n\\n`;
+                // Add current chapter summary (limited)
+                let currentSummary = summaries[currentChapterKey] || '';
+                if (currentSummary.length > MAX_SUMMARY_LENGTH) {{
+                    currentSummary = currentSummary.substring(0, MAX_SUMMARY_LENGTH) + '... [truncated]';
                 }}
+                context += `Current chapter summary:\\n${{currentSummary}}\\n\\n`;
                 
-                // 添加当前章节总结
-                context += `当前章节总结：\\n${{summaries[currentChapterKey]}}\\n\\n`;
-                
-                // 添加前一章总结（用于上下文连贯）
+                // Add previous chapter summary (for contextual coherence, limited)
                 if (currentIndex > 0) {{
                     const prevKey = chapterKeys[currentIndex - 1];
-                    context += `前一章总结（用于上下文）：\\n${{summaries[prevKey]}}\\n\\n`;
+                    let prevSummary = summaries[prevKey] || '';
+                    if (prevSummary.length > MAX_SUMMARY_LENGTH) {{
+                        prevSummary = prevSummary.substring(0, MAX_SUMMARY_LENGTH) + '... [truncated]';
+                    }}
+                    context += `Previous chapter summary (for context):\\n${{prevSummary}}\\n\\n`;
                 }}
                 
-                // 添加后一章总结（用于上下文连贯）
+                // Add next chapter summary (for contextual coherence, limited)
                 if (currentIndex < chapterKeys.length - 1) {{
                     const nextKey = chapterKeys[currentIndex + 1];
-                    context += `下一章总结（用于上下文）：\\n${{summaries[nextKey]}}\\n\\n`;
+                    let nextSummary = summaries[nextKey] || '';
+                    if (nextSummary.length > MAX_SUMMARY_LENGTH) {{
+                        nextSummary = nextSummary.substring(0, MAX_SUMMARY_LENGTH) + '... [truncated]';
+                    }}
+                    context += `Next chapter summary (for context):\\n${{nextSummary}}\\n\\n`;
                 }}
                 
-                // 构建提示词
-                const prompt = `${{context}}用户问题：${{question}}\\n\\n请基于以上章节原文和总结回答用户的问题。回答要准确、详细，可以引用原文内容。直接回答问题，不要重复问题本身。使用中文回答。`;
+                // Build prompt
+                const prompt = `${{context}}User question: ${{question}}\\n\\nPlease answer the user's question based on the above chapter summaries. Answer should be accurate and detailed. Answer directly, don't repeat the question itself. Answer in English.`;
                 
-                // 调用 Gemini API
+                // Call Gemini API
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${{geminiModel}}:generateContent?key=${{geminiApiKey}}`, {{
                     method: 'POST',
                     headers: {{
@@ -1025,63 +1035,63 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
                 }});
                 
                 if (!response.ok) {{
-                    throw new Error(`API 请求失败: ${{response.status}} ${{response.statusText}}`);
+                    throw new Error(`API request failed: ${{response.status}} ${{response.statusText}}`);
                 }}
                 
                 const data = await response.json();
                 
                 if (data.error) {{
-                    throw new Error(data.error.message || 'API 返回错误');
+                    throw new Error(data.error.message || 'API returned error');
                 }}
                 
                 const answer = data.candidates[0].content.parts[0].text;
                 
-                // 移除加载提示
+                // Remove loading indicator
                 loadingDiv.remove();
                 
-                // 渲染回答（支持 Markdown）
+                // Render answer (supports Markdown)
                 const answerHtml = renderMarkdown(answer);
                 
-                // 追加新的问答（不覆盖之前的）
+                // Append new Q&A (don't overwrite previous)
                 const newQADiv = document.createElement('div');
                 newQADiv.className = 'answer';
                 newQADiv.innerHTML = `
                     <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
-                        <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>问题：</strong>${{question}}</p>
+                        <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Question:</strong> ${{question}}</p>
                     </div>
                     <div style="margin-top: 12px;">
-                        <p style="margin: 0 0 8px 0; color: #64748b; font-size: 14px;"><strong>回答：</strong></p>
+                        <p style="margin: 0 0 8px 0; color: #64748b; font-size: 14px;"><strong>Answer:</strong></p>
                         <div style="margin-top: 8px;">${{answerHtml}}</div>
                     </div>
                 `;
                 answerDiv.appendChild(newQADiv);
                 
-                // 滚动到底部
+                // Scroll to bottom
                 answerDiv.scrollTop = answerDiv.scrollHeight;
                 
             }} catch (error) {{
-                console.error('问答错误:', error);
+                console.error('Q&A error:', error);
                 
-                // 移除加载提示
+                // Remove loading indicator
                 loadingDiv.remove();
                 
-                // 追加错误信息
+                // Append error message
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'answer error';
                 errorDiv.innerHTML = `
                     <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
-                        <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>问题：</strong>${{question}}</p>
+                        <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Question:</strong> ${{question}}</p>
                     </div>
-                    <p style="margin-top: 12px; color: #d32f2f;"><strong>错误：</strong>${{error.message}}</p>
-                    <p style="margin-top: 8px; color: #666;">请检查 API Key 是否正确配置，或查看浏览器控制台获取更多信息。</p>
+                    <p style="margin-top: 12px; color: #d32f2f;"><strong>Error:</strong> ${{error.message}}</p>
+                    <p style="margin-top: 8px; color: #666;">Please check if API Key is correctly configured, or check browser console for more information.</p>
                 `;
                 answerDiv.appendChild(errorDiv);
                 
-                // 滚动到底部
+                // Scroll to bottom
                 answerDiv.scrollTop = answerDiv.scrollHeight;
             }}
             
-            // 清空输入框（但保留问答历史）
+            // Clear input box (but keep Q&A history)
             document.getElementById('questionInput').value = '';
         }}
         
@@ -1089,7 +1099,7 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
             window.scrollTo({{ top: 0, behavior: 'smooth' }});
         }}
         
-        // 显示/隐藏返回顶部按钮
+        // Show/hide back to top button
         window.addEventListener('scroll', () => {{
             const backToTop = document.getElementById('backToTop');
             if (window.scrollY > 300) {{
@@ -1099,7 +1109,7 @@ def get_html_javascript_template(summaries_data: dict, chapter_originals: dict, 
             }}
         }});
         
-        // 初始化：加载第一章
+        // Initialize: load first chapter
         if (Object.keys(summaries).length > 0) {{
             const firstKey = Object.keys(summaries)[0];
             loadChapter(firstKey, 0);

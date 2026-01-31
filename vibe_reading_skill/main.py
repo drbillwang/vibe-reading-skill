@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Vibe Reading Skill - 主程序
-智能阅读分析 Agent Skill
+Vibe Reading Skill - Main Program
+Intelligent Reading Analysis Agent Skill
 """
 
 import argparse
@@ -35,21 +35,21 @@ try:
         get_html_javascript_template
     )
 except ImportError:
-    # 支持直接运行 main.py 或从外部调用
+    # Support direct running of main.py or external calls
     import sys
     from pathlib import Path
-    # 添加包路径到 sys.path
+    # Add package path to sys.path
     package_dir = Path(__file__).parent.parent
     if str(package_dir) not in sys.path:
         sys.path.insert(0, str(package_dir))
     
     try:
-        from vibe_reading_skill_CN.gemini_client import GeminiClient
-        from vibe_reading_skill_CN.utils import (
+        from vibe_reading_skill.gemini_client import GeminiClient
+        from vibe_reading_skill.utils import (
             ensure_dir, epub_to_txt, read_file, write_file,
             split_text_by_lines, count_words
         )
-        from vibe_reading_skill_CN.prompts import (
+        from vibe_reading_skill.prompts import (
             get_chapter_identification_prompt,
             get_chapter_boundary_prompt,
             get_fallback_chapter_identification_prompt,
@@ -59,7 +59,7 @@ except ImportError:
             get_context_strategy_prompt,
             get_chapter_analysis_prompt
         )
-        from vibe_reading_skill_CN.templates import (
+        from vibe_reading_skill.templates import (
             get_pdf_css,
             get_html_css,
             get_pdf_html_template,
@@ -67,7 +67,7 @@ except ImportError:
             get_html_javascript_template
         )
     except ImportError:
-        # 如果还是失败，尝试直接导入（在包目录内运行）
+        # If still fails, try direct import (running inside package directory)
         from gemini_client import GeminiClient
         from utils import (
             ensure_dir, epub_to_txt, read_file, write_file,
@@ -94,35 +94,35 @@ except ImportError:
 
 class VibeReadingSkill:
     """
-    Vibe Reading Skill 主类
+    Vibe Reading Skill Main Class
     
-    功能特性：
-    - 智能章节识别：AI 自动识别书籍结构，支持大文档的渐进式预览策略
-    - 自动错误修复：AI 生成的代码执行失败时，会让 AI 看到错误并重新生成
-    - 智能重试机制：遇到 API 配额限制时自动重试（最多 5 次）
-    - 自动封面生成：从文件名提取书名和作者，生成专业 PDF 封面
+    Features:
+    - Intelligent chapter identification: AI automatically identifies book structure, supports progressive preview strategy for large documents
+    - Auto error fixing: When AI-generated code execution fails, AI will see the error and regenerate
+    - Smart retry mechanism: Automatically retries when encountering API quota limits (up to 5 times)
+    - Auto cover generation: Extract book title and author from filename, generate professional PDF cover
     """
     
     def __init__(self, api_key: Optional[str] = None, base_dir: Path = Path("."), model: Optional[str] = None):
         """
-        初始化
+        Initialize
         
         Args:
             api_key: Gemini API Key
-            base_dir: 项目根目录（默认当前目录）
-            model: 使用的 Gemini 模型（可选）
+            base_dir: Project root directory (default current directory)
+            model: Gemini model to use (optional)
         """
         self.client = GeminiClient(api_key=api_key, model=model)
         self.base_dir = Path(base_dir)
         
-        # 创建目录结构
-        self.input_dir = ensure_dir(self.base_dir / "input")  # 输入文件目录
-        self.chapters_dir = ensure_dir(self.base_dir / "chapters")  # 拆分好的原文 txt
-        self.summaries_dir = ensure_dir(self.base_dir / "summaries")  # 总结目录
-        self.pdf_dir = ensure_dir(self.base_dir / "pdf")  # PDF 目录
-        self.html_dir = ensure_dir(self.base_dir / "html")  # HTML 目录
+        # Create directory structure
+        self.input_dir = ensure_dir(self.base_dir / "input")  # Input file directory
+        self.chapters_dir = ensure_dir(self.base_dir / "chapters")  # Split original text txt
+        self.summaries_dir = ensure_dir(self.base_dir / "summaries")  # Summary directory
+        self.pdf_dir = ensure_dir(self.base_dir / "pdf")  # PDF directory
+        self.html_dir = ensure_dir(self.base_dir / "html")  # HTML directory
         
-        # 加载 SKILL.md 作为系统指令
+        # Load SKILL.md as system instruction
         skill_path = Path(__file__).parent / "SKILL.md"
         if skill_path.exists():
             self.system_instruction = read_file(skill_path)
@@ -131,69 +131,69 @@ class VibeReadingSkill:
     
     def preprocess_document(self, input_path: Path) -> str:
         """
-        阶段一：文档预处理与格式转换
+        Phase One: Document preprocessing and format conversion
         
         Args:
-            input_path: 输入文件路径
+            input_path: Input file path
         
         Returns:
-            清理后的文本内容
+            Cleaned text content
         """
         print("=" * 70)
-        print("阶段一：文档预处理与格式转换")
+        print("Phase One: Document Preprocessing and Format Conversion")
         print("=" * 70)
         
         if input_path.suffix.lower() == '.epub':
-            print(f"检测到 EPUB 格式，正在转换...")
-            # 转换后的 TXT 保存到 input 目录
+            print(f"EPUB format detected, converting...")
+            # Save converted TXT to input directory
             txt_path = self.input_dir / f"{input_path.stem}.txt"
             text = epub_to_txt(input_path, txt_path)
-            print(f"✓ EPUB 已转换为 TXT: {txt_path}")
+            print(f"✓ EPUB converted to TXT: {txt_path}")
         else:
-            print(f"读取 TXT 文件...")
+            print(f"Reading TXT file...")
             text = read_file(input_path)
-            print(f"✓ 文件读取完成")
+            print(f"✓ File reading complete")
         
         return text
     
     def identify_chapters(self, document_text: str) -> List[Dict]:
         """
-        阶段二：智能章节识别（带渐进式预览和自动错误修复）
+        Phase Two: Intelligent Chapter Identification (with progressive preview and auto error fixing)
         
-        策略：
-        1. 渐进式预览：如果文档太大，逐步减少预览内容（500→400→300→300→300行）
-        2. AI 生成代码：让 AI 分析文档格式并生成扫描代码
-        3. 自动错误修复：如果代码执行失败，让 AI 看到错误并重新生成（最多 3 次）
-        4. 回退方案：如果所有尝试都失败，使用直接询问 AI 的方式
+        Strategy:
+        1. Progressive preview: If document is too large, gradually reduce preview content (500→400→300→300→300 lines)
+        2. AI generates code: Let AI analyze document format and generate scanning code
+        3. Auto error fixing: If code execution fails, let AI see the error and regenerate (up to 3 times)
+        4. Fallback: If all attempts fail, use direct AI query method
         
         Args:
-            document_text: 文档文本
+            document_text: Document text
         
         Returns:
-            章节信息列表
+            Chapter information list
         """
         print("\n" + "=" * 70)
-        print("阶段二：智能章节识别与拆分")
+        print("Phase Two: Intelligent Chapter Identification and Splitting")
         print("=" * 70)
         
         lines = document_text.split('\n')
         total_lines = len(lines)
         
-        # ========== 阶段1：AI 生成扫描代码（渐进式预览策略）==========
-        print("\n阶段1：AI 分析文档格式并生成扫描代码...")
+        # ========== Phase 1: AI Generate Scanning Code (Progressive Preview Strategy) ==========
+        print("\nPhase 1: AI analyzes document format and generates scanning code...")
         
-        # 定义预览策略序列（逐步减少预览量）
+        # Define preview strategy sequence (gradually reduce preview amount)
         preview_strategies = [
-            # 策略1：初始尝试（最大预览）
-            {"start": 500, "end": 500, "mid1": 200, "mid2": 200, "desc": "开头500/结尾500/中间25% 400/中间50% 400"},
-            # 策略2：第一次减少
-            {"start": 400, "end": 400, "mid1": 150, "mid2": 150, "desc": "开头400/结尾400/中间25% 300/中间50% 300"},
-            # 策略3：继续减少
-            {"start": 300, "end": 300, "mid1": 100, "mid2": 100, "desc": "开头300/结尾300/中间25% 200/中间50% 200"},
-            # 策略4：只保留开头和结尾
-            {"start": 300, "end": 300, "mid1": 0, "mid2": 0, "desc": "开头300/结尾300"},
-            # 策略5：最小预览（最后尝试）
-            {"start": 300, "end": 0, "mid1": 0, "mid2": 0, "desc": "仅开头300行"},
+            # Strategy 1: Initial attempt (maximum preview)
+            {"start": 500, "end": 500, "mid1": 200, "mid2": 200, "desc": "Beginning 500/End 500/Middle 25% 400/Middle 50% 400"},
+            # Strategy 2: First reduction
+            {"start": 400, "end": 400, "mid1": 150, "mid2": 150, "desc": "Beginning 400/End 400/Middle 25% 300/Middle 50% 300"},
+            # Strategy 3: Continue reduction
+            {"start": 300, "end": 300, "mid1": 100, "mid2": 100, "desc": "Beginning 300/End 300/Middle 25% 200/Middle 50% 200"},
+            # Strategy 4: Only keep beginning and end
+            {"start": 300, "end": 300, "mid1": 0, "mid2": 0, "desc": "Beginning 300/End 300"},
+            # Strategy 5: Minimum preview (last attempt)
+            {"start": 300, "end": 0, "mid1": 0, "mid2": 0, "desc": "Only beginning 300 lines"},
         ]
         
         scan_code = None
@@ -203,9 +203,9 @@ class VibeReadingSkill:
         for i, strategy in enumerate(preview_strategies, 1):
             try:
                 if i > 1:
-                    print(f"  尝试策略 {i}：{strategy['desc']}...")
+                    print(f"  Trying strategy {i}: {strategy['desc']}...")
                 else:
-                    print(f"  尝试策略 {i}：{strategy['desc']}...")
+                    print(f"  Trying strategy {i}: {strategy['desc']}...")
                 
                 prompt = get_chapter_identification_prompt(
                     document_text,
@@ -221,39 +221,39 @@ class VibeReadingSkill:
                     temperature=0.3
                 )
                 
-                # 如果成功，跳出循环
-                print(f"  ✓ 策略 {i} 成功")
+                # If successful, break loop
+                print(f"  ✓ Strategy {i} successful")
                 break
                 
             except Exception as e:
                 error_msg = str(e)
                 last_error = e
                 
-                # 检查是否是 token 超限错误
+                # Check if it's a token limit exceeded error
                 if "token count exceeds" in error_msg.lower() or "exceeds the maximum" in error_msg.lower():
                     if i < len(preview_strategies):
-                        print(f"  ⚠️  Token 超限，尝试减少预览量...")
+                        print(f"  ⚠️  Token limit exceeded, trying to reduce preview amount...")
                         continue
                     else:
-                        # 所有策略都失败了
+                        # All strategies failed
                         raise Exception(
-                            f"文档太大，即使只预览开头300行也超过限制。\n"
-                            f"文档总行数: {total_lines:,} 行\n"
-                            f"文档总长度: {len(document_text):,} 字符\n"
-                            f"建议：请考虑使用更小的文档，或联系开发者优化处理大文档的策略。"
+                            f"Document too large, even previewing only first 300 lines exceeds limit.\n"
+                            f"Document total lines: {total_lines:,} lines\n"
+                            f"Document total length: {len(document_text):,} characters\n"
+                            f"Suggestion: Please consider using a smaller document, or contact developer to optimize strategy for handling large documents."
                         )
                 else:
-                    # 其他错误，直接抛出
+                    # Other errors, directly raise
                     raise
         
-        # 检查是否成功获取了 response
+        # Check if response was successfully obtained
         if response is None:
             if last_error:
                 raise last_error
             else:
-                raise Exception("无法生成扫描代码，所有策略都失败了")
+                raise Exception("Unable to generate scanning code, all strategies failed")
         
-        # 解析 AI 返回的扫描代码
+        # Parse AI-returned scanning code
         scan_code = None
         try:
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
@@ -264,18 +264,18 @@ class VibeReadingSkill:
             
             scan_code = result.get('code', '')
             if not scan_code:
-                print("  ⚠️  AI 没有返回扫描代码，使用回退方案...")
+                print("  ⚠️  AI did not return scanning code, using fallback...")
                 chapters = self._fallback_chapter_identification(document_text)
                 return self._validate_and_fix_chapters(chapters, document_text)
         except Exception as e:
-            print(f"  ⚠️  解析 AI 响应失败: {str(e)}")
+            print(f"  ⚠️  Failed to parse AI response: {str(e)}")
             chapters = self._fallback_chapter_identification(document_text)
             return self._validate_and_fix_chapters(chapters, document_text)
         
-        # ========== 执行扫描代码，找到所有章节标记（带错误重试循环）==========
-        print("  执行扫描代码，查找所有章节标记...")
+        # ========== Execute scanning code, find all chapter markers (with error retry loop) ==========
+        print("  Executing scanning code, finding all chapter markers...")
         markers = []
-        max_retries = 3  # 最多重试 3 次
+        max_retries = 3  # Maximum 3 retries
         current_code = scan_code
         attempt = 0
         
@@ -284,48 +284,48 @@ class VibeReadingSkill:
                 local_vars = {'document_text': document_text}
                 exec(current_code, {'__builtins__': __builtins__, 're': re, 'json': json}, local_vars)
                 
-                # 如果代码定义了函数，调用它
+                # If code defines a function, call it
                 if 'scan_chapter_markers' in local_vars and callable(local_vars['scan_chapter_markers']):
                     markers = local_vars['scan_chapter_markers'](document_text)
                 elif 'markers' in local_vars:
                     markers = local_vars['markers']
                 
-                # 检查是否找到标记
+                # Check if markers found
                 if markers and len(markers) > 0:
-                    print(f"  ✓ 找到 {len(markers)} 个章节标记")
-                    break  # 成功，跳出循环
+                    print(f"  ✓ Found {len(markers)} chapter markers")
+                    break  # Success, break loop
                 else:
-                    # 代码执行成功但没找到标记
+                    # Code executed successfully but found no markers
                     if attempt < max_retries:
                         attempt += 1
-                        print(f"  ⚠️  扫描代码没有找到任何标记，让 AI 重新生成代码（尝试 {attempt}/{max_retries}）...")
-                        # 让 AI 看到错误，重新生成代码
-                        fix_prompt = f"""你生成的 Python 扫描代码执行成功，但没有找到任何章节标记。
+                        print(f"  ⚠️  Scanning code found no markers, asking AI to regenerate code (attempt {attempt}/{max_retries})...")
+                        # Let AI see the error and regenerate code
+                        fix_prompt = f"""The Python scanning code you generated executed successfully but found no chapter markers.
 
-原始代码：
+Original code:
 ```python
 {current_code}
 ```
 
-问题：代码执行后返回空列表，没有找到任何章节标记。
+Problem: Code execution returned empty list, found no chapter markers.
 
-请分析原因并重新生成代码：
-1. 检查正则表达式或匹配规则是否正确
-2. 确保代码能遍历整个文档的所有行
-3. 调整匹配模式以适应文档的实际格式
+Please analyze the reason and regenerate code:
+1. Check if regular expressions or matching rules are correct
+2. Ensure code can iterate through all lines of the entire document
+3. Adjust matching patterns to adapt to the document's actual format
 
-文档统计：
-- 总长度：{len(document_text):,} 字符
-- 总行数：{total_lines:,} 行
+Document statistics:
+- Total length: {len(document_text):,} characters
+- Total lines: {total_lines:,} lines
 
-文档预览（前 1000 行，用于分析格式）：
+Document preview (first 1000 lines, for format analysis):
 {'\n'.join(document_text.split('\n')[:1000])}
 
-请返回修复后的代码（JSON 格式）：
+Please return fixed code (JSON format):
 {{
-    "code": "修复后的 Python 扫描代码（字符串）",
-    "format_analysis": "你观察到的章节格式特点",
-    "reasoning": "为什么之前的代码没找到标记，以及如何修复"
+    "code": "Fixed Python scanning code (string)",
+    "format_analysis": "Chapter format characteristics you observed",
+    "reasoning": "Why previous code found no markers and how to fix"
 }}"""
                         
                         fix_response = self.client.generate_content(
@@ -343,18 +343,18 @@ class VibeReadingSkill:
                             
                             current_code = fix_result.get('code', current_code)
                             if not current_code:
-                                print("  ⚠️  AI 没有返回新代码，使用回退方案...")
+                                print("  ⚠️  AI did not return new code, using fallback...")
                                 chapters = self._fallback_chapter_identification(document_text)
                                 return self._validate_and_fix_chapters(chapters, document_text)
-                            continue  # 重试新代码
+                            continue  # Retry new code
                         except Exception as e2:
-                            print(f"  ⚠️  解析 AI 修复响应失败: {str(e2)}")
+                            print(f"  ⚠️  Failed to parse AI fix response: {str(e2)}")
                             if attempt >= max_retries:
                                 break
                             attempt += 1
                             continue
                     else:
-                        print("  ⚠️  重试次数用尽，使用回退方案...")
+                        print("  ⚠️  Retry count exhausted, using fallback...")
                         chapters = self._fallback_chapter_identification(document_text)
                         return self._validate_and_fix_chapters(chapters, document_text)
             
@@ -362,35 +362,35 @@ class VibeReadingSkill:
                 error_msg = str(e)
                 if attempt < max_retries:
                     attempt += 1
-                    print(f"  ⚠️  扫描代码执行失败: {error_msg}")
-                    print(f"  让 AI 根据错误信息重新生成代码（尝试 {attempt}/{max_retries}）...")
+                    print(f"  ⚠️  Scanning code execution failed: {error_msg}")
+                    print(f"  Asking AI to regenerate code based on error information (attempt {attempt}/{max_retries})...")
                     
-                    # 让 AI 看到错误，重新生成代码
-                    fix_prompt = f"""你生成的 Python 扫描代码执行失败，错误信息如下：
+                    # Let AI see the error and regenerate code
+                    fix_prompt = f"""The Python scanning code you generated failed to execute, error message below:
 
-错误：{error_msg}
+Error: {error_msg}
 
-原始代码：
+Original code:
 ```python
 {current_code}
 ```
 
-请分析错误原因，然后：
-1. 修复代码中的问题（比如语法错误、转义字符错误、变量名错误等）
-2. 重新生成正确的代码
+Please analyze the error cause, then:
+1. Fix problems in the code (such as syntax errors, escape character errors, variable name errors, etc.)
+2. Regenerate correct code
 
-文档统计：
-- 总长度：{len(document_text):,} 字符
-- 总行数：{total_lines:,} 行
+Document statistics:
+- Total length: {len(document_text):,} characters
+- Total lines: {total_lines:,} lines
 
-文档预览（前 1000 行，用于分析格式）：
+Document preview (first 1000 lines, for format analysis):
 {'\n'.join(document_text.split('\n')[:1000])}
 
-请返回修复后的代码（JSON 格式）：
+Please return fixed code (JSON format):
 {{
-    "code": "修复后的 Python 扫描代码（字符串，注意转义字符）",
-    "error_analysis": "错误原因分析",
-    "fix_reasoning": "如何修复"
+    "code": "Fixed Python scanning code (string, note escape characters)",
+    "error_analysis": "Error cause analysis",
+    "fix_reasoning": "How to fix"
 }}"""
                     
                     try:
@@ -408,28 +408,28 @@ class VibeReadingSkill:
                         
                         current_code = fix_result.get('code', current_code)
                         if not current_code:
-                            print("  ⚠️  AI 没有返回新代码，使用回退方案...")
+                            print("  ⚠️  AI did not return new code, using fallback...")
                             chapters = self._fallback_chapter_identification(document_text)
                             return self._validate_and_fix_chapters(chapters, document_text)
-                        continue  # 重试新代码
+                        continue  # Retry new code
                     except Exception as e2:
-                        print(f"  ⚠️  AI 修复也失败: {str(e2)}")
+                        print(f"  ⚠️  AI fix also failed: {str(e2)}")
                         if attempt >= max_retries:
                             break
                         continue
                 else:
-                    print(f"  ⚠️  重试次数用尽，使用回退方案...")
+                    print(f"  ⚠️  Retry count exhausted, using fallback...")
                     chapters = self._fallback_chapter_identification(document_text)
                     return self._validate_and_fix_chapters(chapters, document_text)
         
-        # 如果循环结束还没找到标记，使用回退方案
+        # If loop ended without finding markers, use fallback
         if not markers or len(markers) == 0:
-            print("  ⚠️  所有重试都失败，使用回退方案...")
+            print("  ⚠️  All retries failed, using fallback...")
             chapters = self._fallback_chapter_identification(document_text)
             return self._validate_and_fix_chapters(chapters, document_text)
         
-        # ========== 阶段2：基于扫描结果，让AI确定边界 ==========
-        print("\n阶段2：AI 基于扫描结果确定章节边界...")
+        # ========== Phase 2: Based on scan results, let AI determine boundaries ==========
+        print("\nPhase 2: AI determines chapter boundaries based on scan results...")
         boundary_prompt = get_chapter_boundary_prompt(markers, total_lines)
         
         boundary_response = self.client.generate_content(
@@ -438,7 +438,7 @@ class VibeReadingSkill:
             temperature=0.3
         )
         
-        # 解析 AI 返回的章节列表
+        # Parse AI-returned chapter list
         chapters = []
         try:
             json_match = re.search(r'\{.*\}', boundary_response, re.DOTALL)
@@ -449,59 +449,59 @@ class VibeReadingSkill:
             
             chapters = result.get('chapters', [])
             if not chapters or len(chapters) == 0:
-                print("  ⚠️  AI 没有返回章节列表，使用回退方案...")
+                print("  ⚠️  AI did not return chapter list, using fallback...")
                 chapters = self._fallback_chapter_identification(document_text)
         except Exception as e:
-            print(f"  ⚠️  解析章节边界失败: {str(e)}")
+            print(f"  ⚠️  Failed to parse chapter boundaries: {str(e)}")
             chapters = self._fallback_chapter_identification(document_text)
             
-            # 验证章节格式：确保是字典列表
+            # Validate chapter format: ensure it's a list of dictionaries
             if chapters:
                 if not isinstance(chapters, list):
-                    print("  ⚠️  AI 返回的不是列表，尝试转换...")
+                    print("  ⚠️  AI returned non-list, attempting conversion...")
                     chapters = [chapters] if chapters else []
                 
-                # 检查每个章节是否是字典（如果不是，在 split_chapters 中修复）
+                # Check if each chapter is a dictionary (if not, fix in split_chapters)
                 validated_chapters = []
                 for i, ch in enumerate(chapters):
                     if isinstance(ch, dict):
                         validated_chapters.append(ch)
                     else:
-                        print(f"  ⚠️  章节 {i+1} 格式异常（{type(ch).__name__}），将在拆分时修复")
-                        validated_chapters.append(ch)  # 保留原格式，在 split_chapters 中修复
+                        print(f"  ⚠️  Chapter {i+1} format abnormal ({type(ch).__name__}), will fix during splitting")
+                        validated_chapters.append(ch)  # Keep original format, fix in split_chapters
                 
                 chapters = validated_chapters
             else:
-                # 如果 AI 生成的代码返回空列表，触发回退方案
-                print("  ⚠️  AI 生成的代码返回空列表，触发回退方案...")
-                chapters = None  # 标记需要回退
+                # If AI-generated code returns empty list, trigger fallback
+                print("  ⚠️  AI-generated code returned empty list, triggering fallback...")
+                chapters = None  # Mark need for fallback
             
         except Exception as e:
             error_msg = str(e)
-            print(f"  ⚠️  AI 生成的代码执行失败: {error_msg}")
-            print("  让 AI 根据错误信息修复代码...")
+            print(f"  ⚠️  AI-generated code execution failed: {error_msg}")
+            print("  Asking AI to fix code based on error information...")
             
-            # 让 AI 知道错误原因并修复
-            fix_prompt = f"""你生成的 Python 代码执行失败，错误信息如下：
+            # Let AI know error cause and fix
+            fix_prompt = f"""The Python code you generated failed to execute, error message below:
 
-错误：{error_msg}
+Error: {error_msg}
 
-请分析错误原因，然后：
-1. 修复代码中的问题（比如转义字符错误、语法错误等）
-2. 重新生成正确的代码
+Please analyze the error cause, then:
+1. Fix problems in the code (such as escape character errors, syntax errors, etc.)
+2. Regenerate correct code
 
-原始 prompt 要求：
-- 生成一个函数 `identify_chapters(document_text)` 
-- 返回章节列表，每个章节包含：number, title, start_line, end_line, filename
-- 必须硬编码所有章节的准确行号
+Original prompt requirements:
+- Generate a function `identify_chapters(document_text)` 
+- Return chapter list, each chapter contains: number, title, start_line, end_line, filename
+- Must hardcode accurate line numbers for all chapters
 
-文档统计：
-- 总长度：{len(document_text):,} 字符
-- 总行数：{len(document_text.split(chr(10))):,} 行
+Document statistics:
+- Total length: {len(document_text):,} characters
+- Total lines: {len(document_text.split(chr(10))):,} lines
 
-请返回修复后的代码（JSON 格式）：
+Please return fixed code (JSON format):
 {{
-    "code": "修复后的 Python 代码（字符串，注意转义字符）",
+    "code": "Fixed Python code (string, note escape characters)",
     "chapters": [
         {{
             "number": "00",
@@ -527,15 +527,15 @@ class VibeReadingSkill:
                 else:
                     fix_result = json.loads(fix_response)
                 
-                # 尝试使用修复后的代码
+                # Try using fixed code
                 fixed_code = fix_result.get('code', '')
                 fixed_chapters = fix_result.get('chapters', [])
                 
                 if fixed_chapters and isinstance(fixed_chapters, list) and len(fixed_chapters) > 0:
-                    print(f"  ✓ AI 修复后直接返回了 {len(fixed_chapters)} 个章节")
+                    print(f"  ✓ AI directly returned {len(fixed_chapters)} chapters after fix")
                     chapters = fixed_chapters
                 elif fixed_code:
-                    print("  执行修复后的代码...")
+                    print("  Executing fixed code...")
                     try:
                         local_vars = {'document_text': document_text}
                         exec(fixed_code, {'__builtins__': __builtins__, 're': re, 'json': json}, local_vars)
@@ -543,17 +543,17 @@ class VibeReadingSkill:
                         if 'identify_chapters' in local_vars and callable(local_vars['identify_chapters']):
                             chapters = local_vars['identify_chapters'](document_text)
                     except Exception as e3:
-                        print(f"  ⚠️  修复后的代码执行也失败: {str(e3)}")
+                        print(f"  ⚠️  Fixed code execution also failed: {str(e3)}")
                         chapters = []
                 else:
                     chapters = []
             except Exception as e2:
-                print(f"  ⚠️  AI 修复也失败: {str(e2)}")
+                print(f"  ⚠️  AI fix also failed: {str(e2)}")
                 chapters = []
             
-            # 如果修复失败，使用回退方案
+            # If fix fails, use fallback
             if not chapters or len(chapters) == 0:
-                print("  回退到直接询问 AI...")
+                print("  Falling back to direct AI query...")
                 fallback_prompt = get_fallback_chapter_identification_prompt(document_text, 50000)
                 
                 fallback_response = self.client.generate_content(
@@ -570,41 +570,41 @@ class VibeReadingSkill:
                         result = json.loads(fallback_response)
                     chapters = result.get('chapters', [])
                 except Exception as e3:
-                    print(f"  ⚠️  回退方案也失败: {str(e3)}")
+                    print(f"  ⚠️  Fallback also failed: {str(e3)}")
                     chapters = []
         
-        # 如果章节列表为空，使用回退方案
+        # If chapter list is empty, use fallback
         if not chapters or len(chapters) == 0:
-            print("  ⚠️  章节识别失败，使用回退方案...")
+            print("  ⚠️  Chapter identification failed, using fallback...")
             chapters = self._fallback_chapter_identification(document_text)
         
-        # 验证章节识别的合理性
+        # Validate chapter identification reasonableness
         chapters = self._validate_and_fix_chapters(chapters, document_text)
         
-        # 验证行号覆盖，找出空隙并标记为非正文
+        # Verify line number coverage, find gaps and mark as non-main text
         chapters = self._verify_line_coverage(chapters, document_text)
         
-        # 固定使用 7000 words 作为每章最大字数（不再让 AI 决定）
+        # Fixed use 7000 words as maximum words per chapter (no longer let AI decide)
         self.suggested_max_words = 7000
         
-        # 统计正文章节数量（排除非正文章节）
+        # Count main text chapters (exclude non-main text chapters)
         content_chapters = [ch for ch in chapters if not ch.get('is_non_content', False)]
-        print(f"✓ 识别到 {len(content_chapters)} 个正文章节")
+        print(f"✓ Identified {len(content_chapters)} main text chapters")
         if len(chapters) > len(content_chapters):
-            print(f"  包含 {len(chapters) - len(content_chapters)} 个非正文章节（用于字数验证）")
-        print(f"  每章最大字数限制：7000 英文单词（固定值，用于进一步拆分）")
+            print(f"  Including {len(chapters) - len(content_chapters)} non-main text chapters (for word count verification)")
+        print(f"  Maximum words per chapter: 7000 English words (fixed value, for further breakdown)")
         return chapters
     
     def _validate_and_fix_chapters(self, chapters: List[Dict], document_text: str) -> List[Dict]:
         """
-        验证章节识别的合理性，如果发现问题让 AI 修复
+        Validate chapter identification reasonableness, if issues found let AI fix
         
         Args:
-            chapters: 章节列表
-            document_text: 文档文本
+            chapters: Chapter list
+            document_text: Document text
             
         Returns:
-            修复后的章节列表
+            Fixed chapter list
         """
         if not chapters:
             return chapters
@@ -612,60 +612,60 @@ class VibeReadingSkill:
         lines = document_text.split('\n')
         total_lines = len(lines)
         
-        # 检查是否有问题
+        # Check if there are issues
         issues = []
         
-        # 检查1：是否有多个章节的 end_line 都等于文档总行数
+        # Check 1: Are there multiple chapters with end_line equal to document total lines
         chapters_with_full_end = [i for i, ch in enumerate(chapters) 
                                  if isinstance(ch, dict) and 
                                  (ch.get('end_line') or ch.get('end') or 0) == total_lines]
         if len(chapters_with_full_end) > 1:
-            issues.append(f"发现 {len(chapters_with_full_end)} 个章节的 end_line 都等于文档总行数，说明识别有误")
+            issues.append(f"Found {len(chapters_with_full_end)} chapters with end_line equal to document total lines, indicating identification error")
         
-        # 检查2：是否有章节的 start_line >= end_line
+        # Check 2: Are there chapters with start_line >= end_line
         invalid_ranges = [i for i, ch in enumerate(chapters)
                          if isinstance(ch, dict) and
                          (ch.get('start_line') or 1) >= (ch.get('end_line') or total_lines)]
         if invalid_ranges:
-            issues.append(f"发现 {len(invalid_ranges)} 个章节的行号范围无效")
+            issues.append(f"Found {len(invalid_ranges)} chapters with invalid line number ranges")
         
-        # 检查3：是否有章节的 start_line == 1 且 end_line == total_lines（包含整个文档）
+        # Check 3: Are there chapters with start_line == 1 and end_line == total_lines (contains entire document)
         full_doc_chapters = [i for i, ch in enumerate(chapters)
                             if isinstance(ch, dict) and
                             (ch.get('start_line') or 1) == 1 and
                             (ch.get('end_line') or total_lines) == total_lines]
         if len(full_doc_chapters) > 0:
-            issues.append(f"发现 {len(full_doc_chapters)} 个章节包含整个文档，说明识别有误")
+            issues.append(f"Found {len(full_doc_chapters)} chapters containing entire document, indicating identification error")
         
         if issues:
-            print(f"  ⚠️  检测到章节识别问题：")
+            print(f"  ⚠️  Detected chapter identification issues:")
             for issue in issues:
                 print(f"    - {issue}")
-            print(f"  让 AI 重新识别章节...")
+            print(f"  Asking AI to re-identify chapters...")
             
-            # 让 AI 重新识别（使用回退方案，但提供更多文档内容）
+            # Let AI re-identify (use fallback, but provide more document content)
             fixed_chapters = self._fallback_chapter_identification(document_text)
             
-            # 再次验证修复后的章节
+            # Verify fixed chapters again
             if fixed_chapters:
                 return self._validate_and_fix_chapters(fixed_chapters, document_text)
             else:
-                # 如果还是失败，使用紧急拆分
-                print("  ⚠️  AI 重新识别也失败，使用紧急拆分方案...")
+                # If still fails, use emergency split
+                print("  ⚠️  AI re-identification also failed, using emergency split...")
                 return self._emergency_split(document_text)
         
         return chapters
     
     def _verify_line_coverage(self, chapters: List[Dict], document_text: str) -> List[Dict]:
         """
-        验证行号覆盖，找出空隙并标记为非正文
+        Verify line number coverage, find gaps and mark as non-main text
         
         Args:
-            chapters: 章节列表
-            document_text: 文档文本
+            chapters: Chapter list
+            document_text: Document text
             
         Returns:
-            包含非正文章节的完整章节列表
+            Complete chapter list including non-main text chapters
         """
         if not chapters:
             return chapters
@@ -673,7 +673,7 @@ class VibeReadingSkill:
         lines = document_text.split('\n')
         total_lines = len(lines)
         
-        # 收集所有正文章节的行号范围（排除非正文章节）
+        # Collect all main text chapter line number ranges (exclude non-main text chapters)
         covered_ranges = []
         for chapter in chapters:
             if isinstance(chapter, dict) and not chapter.get('is_non_content', False):
@@ -689,31 +689,31 @@ class VibeReadingSkill:
         if not covered_ranges:
             return chapters
         
-        # 排序
+        # Sort
         covered_ranges.sort(key=lambda x: x[0])
         
-        # 找出空隙（未被覆盖的行范围）
+        # Find gaps (uncovered line ranges)
         gaps = []
         current_pos = 1
         
         for start, end in covered_ranges:
             if current_pos < start:
-                # 发现空隙
+                # Found gap
                 gaps.append((current_pos, start - 1))
             current_pos = max(current_pos, end + 1)
         
-        # 检查最后是否有空隙
+        # Check if there's a gap at the end
         if current_pos <= total_lines:
             gaps.append((current_pos, total_lines))
         
-        # 如果有空隙，标记为非正文章节
+        # If there are gaps, mark as non-main text chapters
         if gaps:
-            print(f"\n  发现 {len(gaps)} 个非正文区域（目录、地图列表等）")
+            print(f"\n  Found {len(gaps)} non-main text areas (table of contents, map lists, etc.)")
             non_content_chapters = []
             for i, (gap_start, gap_end) in enumerate(gaps):
-                # 读取空隙内容的前几行，用于生成标题
+                # Read first few lines of gap content for generating title
                 gap_preview = '\n'.join(lines[gap_start-1:min(gap_start+5, gap_end)])
-                # 尝试提取标题
+                # Try to extract title
                 title_match = re.search(r'^(Contents?|Table of Contents|List of Maps|Acknowledgements?|Preface|Title Page)', gap_preview, re.I)
                 if title_match:
                     title = title_match.group(1)
@@ -726,32 +726,32 @@ class VibeReadingSkill:
                     "start_line": gap_start,
                     "end_line": gap_end,
                     "filename": f"NC{i+1:02d}_{title.replace(' ', '_')[:30]}.txt",
-                    "is_non_content": True  # 标记为非正文
+                    "is_non_content": True  # Mark as non-main text
                 })
             
-            # 合并正文章节和非正文章节
+            # Merge main text chapters and non-main text chapters
             all_chapters = chapters + non_content_chapters
-            # 按 start_line 排序
+            # Sort by start_line
             all_chapters.sort(key=lambda x: int(x.get('start_line', 0)))
             
-            print(f"  ✓ 添加了 {len(non_content_chapters)} 个非正文章节（用于字数验证）")
+            print(f"  ✓ Added {len(non_content_chapters)} non-main text chapters (for word count verification)")
             return all_chapters
         
         return chapters
     
     def _fallback_chapter_identification(self, document_text: str) -> List[Dict]:
         """
-        回退方案：如果 AI 生成的代码失败，直接询问 AI 识别章节
+        Fallback: If AI-generated code fails, directly ask AI to identify chapters
         
         Args:
-            document_text: 文档文本
+            document_text: Document text
             
         Returns:
-            章节信息列表
+            Chapter information list
         """
-        print("  使用回退方案：直接询问 AI...")
+        print("  Using fallback: directly asking AI...")
         
-        # 读取更多文档内容（前 100000 字符，或全部文档如果更短）
+        # Read more document content (first 100000 characters, or entire document if shorter)
         preview_length = min(100000, len(document_text))
         fallback_prompt = get_fallback_chapter_identification_prompt(document_text, preview_length)
         
@@ -770,115 +770,32 @@ class VibeReadingSkill:
             
             chapters = result.get('chapters', [])
             
-            # 如果还是空，使用最后的备用方案：按固定长度拆分
+            # If still empty, use final backup: split by fixed length
             if not chapters or len(chapters) == 0:
-                print("  ⚠️  回退方案也失败，使用最后的备用方案：按固定长度拆分...")
+                print("  ⚠️  Fallback also failed, using final backup: split by fixed length...")
                 chapters = self._emergency_split(document_text)
             
             return chapters
             
         except Exception as e:
-            print(f"  ⚠️  回退方案执行失败: {str(e)}")
-            print("  使用最后的备用方案：按固定长度拆分...")
+            print(f"  ⚠️  Fallback execution failed: {str(e)}")
+            print("  Using final backup: split by fixed length...")
             return self._emergency_split(document_text)
-    
-    def _verify_line_coverage(self, chapters: List[Dict], document_text: str) -> List[Dict]:
-        """
-        验证行号覆盖，找出空隙并标记为非正文
-        
-        Args:
-            chapters: 章节列表
-            document_text: 文档文本
-            
-        Returns:
-            包含非正文章节的完整章节列表
-        """
-        if not chapters:
-            return chapters
-        
-        lines = document_text.split('\n')
-        total_lines = len(lines)
-        
-        # 收集所有正文章节的行号范围（排除非正文章节）
-        covered_ranges = []
-        for chapter in chapters:
-            if isinstance(chapter, dict) and not chapter.get('is_non_content', False):
-                start = chapter.get('start_line') or chapter.get('start') or 1
-                end = chapter.get('end_line') or chapter.get('end') or total_lines
-                try:
-                    start = int(start)
-                    end = int(end)
-                    covered_ranges.append((start, end))
-                except (ValueError, TypeError):
-                    continue
-        
-        if not covered_ranges:
-            return chapters
-        
-        # 排序
-        covered_ranges.sort(key=lambda x: x[0])
-        
-        # 找出空隙（未被覆盖的行范围）
-        gaps = []
-        current_pos = 1
-        
-        for start, end in covered_ranges:
-            if current_pos < start:
-                # 发现空隙
-                gaps.append((current_pos, start - 1))
-            current_pos = max(current_pos, end + 1)
-        
-        # 检查最后是否有空隙
-        if current_pos <= total_lines:
-            gaps.append((current_pos, total_lines))
-        
-        # 如果有空隙，标记为非正文章节
-        if gaps:
-            print(f"\n  发现 {len(gaps)} 个非正文区域（目录、地图列表等）")
-            non_content_chapters = []
-            for i, (gap_start, gap_end) in enumerate(gaps):
-                # 读取空隙内容的前几行，用于生成标题
-                gap_preview = '\n'.join(lines[gap_start-1:min(gap_start+5, gap_end)])
-                # 尝试提取标题
-                title_match = re.search(r'^(Contents?|Table of Contents|List of Maps|Acknowledgements?|Preface|Title Page)', gap_preview, re.I)
-                if title_match:
-                    title = title_match.group(1)
-                else:
-                    title = f"Non-Content Section {i+1}"
-                
-                non_content_chapters.append({
-                    "number": f"NC{i+1:02d}",
-                    "title": title,
-                    "start_line": gap_start,
-                    "end_line": gap_end,
-                    "filename": f"NC{i+1:02d}_{title.replace(' ', '_')[:30]}.txt",
-                    "is_non_content": True  # 标记为非正文
-                })
-            
-            # 合并正文章节和非正文章节
-            all_chapters = chapters + non_content_chapters
-            # 按 start_line 排序
-            all_chapters.sort(key=lambda x: int(x.get('start_line', 0)))
-            
-            print(f"  ✓ 添加了 {len(non_content_chapters)} 个非正文章节（用于字数验证）")
-            return all_chapters
-        
-        return chapters
     
     def _emergency_split(self, document_text: str) -> List[Dict]:
         """
-        最后的备用方案：如果所有 AI 方案都失败，按固定长度拆分文档
+        Final backup: If all AI methods fail, split document by fixed length
         
         Args:
-            document_text: 文档文本
+            document_text: Document text
             
         Returns:
-            章节信息列表
+            Chapter information list
         """
         lines = document_text.split('\n')
         total_lines = len(lines)
         
-        # 拆分成 10 个部分
+        # Split into 10 parts
         num_parts = 10
         lines_per_part = total_lines // num_parts
         
@@ -890,11 +807,11 @@ class VibeReadingSkill:
             else:
                 end_line = (i + 1) * lines_per_part
             
-            # 尝试从内容中提取标题（取该部分的前几行）
+            # Try to extract title from content (take first few lines of this part)
             part_preview = '\n'.join(lines[start_line-1:min(start_line+10, end_line)])
             title_match = re.search(r'^(?:CHAPTER|Chapter|Part|第.*?章|第.*?部分)\s*[:\-]?\s*(.+?)$', part_preview, re.MULTILINE | re.IGNORECASE)
             if title_match:
-                title = title_match.group(1).strip()[:50]  # 限制标题长度
+                title = title_match.group(1).strip()[:50]  # Limit title length
             else:
                 title = f"Part {i+1}"
             
@@ -906,87 +823,87 @@ class VibeReadingSkill:
                 "filename": f"{i:02d}_{title.replace(' ', '_')[:30]}.txt"
             })
         
-        print(f"  ✓ 使用备用方案拆分成 {len(chapters)} 个部分")
+        print(f"  ✓ Using backup split into {len(chapters)} parts")
         return chapters
     
     def split_chapters(self, document_text: str, chapters: List[Dict]) -> None:
         """
-        执行章节拆分
+        Execute chapter splitting
         
         Args:
-            document_text: 文档文本
-            chapters: 章节信息列表（可能是各种格式，需要智能处理）
+            document_text: Document text
+            chapters: Chapter information list (may be in various formats, need intelligent handling)
         """
-        print("\n正在拆分章节...")
+        print("\nSplitting chapters...")
         lines = document_text.split('\n')
         
-        # 智能处理章节格式：如果格式不对，让 AI 修复
+        # Intelligently handle chapter format: if format is wrong, let AI fix
         if not chapters:
-            print("  ⚠️  没有章节数据，跳过拆分")
+            print("  ⚠️  No chapter data, skipping split")
             return
         
-        # 检查并修复章节格式
+        # Check and fix chapter format
         fixed_chapters = []
         for i, chapter in enumerate(chapters):
             if isinstance(chapter, dict):
-                # 已经是字典格式，直接使用
+                # Already in dict format, use directly
                 fixed_chapters.append(chapter)
             elif isinstance(chapter, str):
-                # 如果是字符串，尝试解析或让 AI 修复
-                print(f"  ⚠️  章节 {i+1} 格式异常（字符串），尝试修复...")
+                # If string, try to parse or let AI fix
+                print(f"  ⚠️  Chapter {i+1} format abnormal (string), attempting fix...")
                 try:
-                    # 尝试解析为 JSON
+                    # Try to parse as JSON
                     parsed = json.loads(chapter)
                     if isinstance(parsed, dict):
                         fixed_chapters.append(parsed)
                     else:
-                        # 让 AI 修复格式
+                        # Let AI fix format
                         fixed_chapters.append(self._fix_chapter_format(chapter, document_text, i))
                 except:
-                    # 让 AI 修复格式
+                    # Let AI fix format
                     fixed_chapters.append(self._fix_chapter_format(chapter, document_text, i))
             else:
-                # 其他格式，让 AI 修复
-                print(f"  ⚠️  章节 {i+1} 格式异常，尝试修复...")
+                # Other formats, let AI fix
+                print(f"  ⚠️  Chapter {i+1} format abnormal, attempting fix...")
                 fixed_chapters.append(self._fix_chapter_format(str(chapter), document_text, i))
         
-        # 使用修复后的章节列表
+        # Use fixed chapter list
         chapters = fixed_chapters
         
         for i, chapter in enumerate(chapters):
-            # 安全获取字段，支持各种可能的键名
+            # Safely get fields, support various possible key names
             start_line = chapter.get('start_line') or chapter.get('start') or chapter.get('startLine') or 1
             end_line = chapter.get('end_line') or chapter.get('end') or chapter.get('endLine') or len(lines)
             filename = chapter.get('filename') or chapter.get('name') or f"{chapter.get('number', '00')}_Chapter.txt"
             
-            # 确保是整数
+            # Ensure integers
             try:
                 start_line = int(start_line)
                 end_line = int(end_line)
             except (ValueError, TypeError):
-                print(f"  ⚠️  章节 {i+1} 行号格式错误，使用默认值")
+                print(f"  ⚠️  Chapter {i+1} line number format error, using default values")
                 start_line = 1
                 end_line = len(lines)
             
-            # 确保不是 None
+            # Ensure not None
             if start_line is None:
                 start_line = 1
             if end_line is None:
                 end_line = len(lines)
             
-            # 验证行号是否合理
+            # Verify line numbers are reasonable
             if start_line < 1:
                 start_line = 1
             if end_line > len(lines):
                 end_line = len(lines)
             if start_line >= end_line:
-                print(f"  ⚠️  章节 {i+1} ({filename}) 行号无效 (start={start_line}, end={end_line})，让 AI 修复...")
-                # 让 AI 重新识别这个章节的行号
+                print(f"  ⚠️  Chapter {i+1} ({filename}) line numbers invalid (start={start_line}, end={end_line}), asking AI to fix...")
+                # Let AI re-identify this chapter's line numbers
                 fixed = self._fix_chapter_line_numbers(chapter, document_text, i, len(lines))
                 start_line = fixed.get('start_line') or 1
                 end_line = fixed.get('end_line') or len(lines)
                 filename = fixed.get('filename') or filename
-                # 确保是整数
+                # Ensure integers
                 try:
                     start_line = int(start_line)
                     end_line = int(end_line)
@@ -994,14 +911,14 @@ class VibeReadingSkill:
                     start_line = 1
                     end_line = len(lines)
             
-            # 检查是否所有章节的 end_line 都是文档总行数（说明识别有问题）
+            # Check if all chapters' end_line equal document total lines (indicates identification problem)
             if i > 0 and end_line == len(lines) and start_line == 1:
-                print(f"  ⚠️  章节 {i+1} ({filename}) 可能识别错误（包含整个文档），让 AI 重新识别...")
+                print(f"  ⚠️  Chapter {i+1} ({filename}) may be incorrectly identified (contains entire document), asking AI to re-identify...")
                 fixed = self._fix_chapter_line_numbers(chapter, document_text, i, len(lines))
                 start_line = fixed.get('start_line') or 1
                 end_line = fixed.get('end_line') or len(lines)
                 filename = fixed.get('filename') or filename
-                # 确保是整数
+                # Ensure integers
                 try:
                     start_line = int(start_line)
                     end_line = int(end_line)
@@ -1012,48 +929,48 @@ class VibeReadingSkill:
             chapter_text = split_text_by_lines(document_text, start_line, end_line)
             output_path = self.chapters_dir / filename
             
-            # 验证提取的内容是否合理（不应该和整个文档一样）
+            # Verify extracted content is reasonable (shouldn't be same as entire document)
             if len(chapter_text) == len(document_text) and i > 0:
-                print(f"  ⚠️  警告：章节 {i+1} ({filename}) 内容与整个文档相同，可能识别错误")
-                # 尝试使用前一个章节的 end_line 作为 start_line
+                print(f"  ⚠️  Warning: Chapter {i+1} ({filename}) content same as entire document, may be identification error")
+                # Try using previous chapter's end_line as start_line
                 if i > 0 and isinstance(chapters[i-1], dict):
                     prev_end = chapters[i-1].get('end_line') or chapters[i-1].get('end') or chapters[i-1].get('endLine')
                     if prev_end:
                         try:
                             start_line = int(prev_end) + 1
-                            # 让 AI 决定这个章节的结束位置
+                            # Let AI decide this chapter's end position
                             fixed = self._fix_chapter_line_numbers(chapter, document_text, i, len(lines), start_line)
                             end_line = fixed.get('end_line') or min(start_line + 1000, len(lines))
-                            # 确保是整数
+                            # Ensure integer
                             try:
                                 end_line = int(end_line)
                             except (ValueError, TypeError):
                                 end_line = min(start_line + 1000, len(lines))
                             chapter_text = split_text_by_lines(document_text, start_line, end_line)
-                            print(f"  ✓ 已修复：{filename} (lines {start_line}-{end_line})")
+                            print(f"  ✓ Fixed: {filename} (lines {start_line}-{end_line})")
                         except:
                             pass
             
             write_file(output_path, chapter_text)
-            print(f"  ✓ {filename} (lines {start_line}-{end_line}, {len(chapter_text)} 字符)")
+            print(f"  ✓ {filename} (lines {start_line}-{end_line}, {len(chapter_text)} characters)")
         
-        print(f"\n✓ 所有章节已保存到: {self.chapters_dir}")
+        print(f"\n✓ All chapters saved to: {self.chapters_dir}")
     
     def _fix_chapter_line_numbers(self, chapter: Dict, document_text: str, index: int, total_lines: int, suggested_start: Optional[int] = None) -> Dict:
         """
-        让 AI 修复章节的行号
+        Let AI fix chapter line numbers
         
         Args:
-            chapter: 章节字典
-            document_text: 文档文本
-            index: 章节索引
-            total_lines: 文档总行数
-            suggested_start: 建议的起始行号（可选）
+            chapter: Chapter dictionary
+            document_text: Document text
+            index: Chapter index
+            total_lines: Document total lines
+            suggested_start: Suggested starting line number (optional)
             
         Returns:
-            修复后的章节字典
+            Fixed chapter dictionary
         """
-        # 使用 prompts.py 中的 prompt
+        # Use prompt from prompts.py
         prompt = get_fix_chapter_line_numbers_prompt(chapter, document_text, index, total_lines, suggested_start)
         
         try:
@@ -1066,12 +983,12 @@ class VibeReadingSkill:
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 fixed = json.loads(json_match.group())
-                # 获取标题，如果没有则使用默认值
+                # Get title, use default if not available
                 default_title = chapter.get('title', f"Chapter {index+1}")
-                # 确保 start_line 和 end_line 不是 None
+                # Ensure start_line and end_line are not None
                 fixed_start = fixed.get('start_line') or suggested_start or max(1, (index * total_lines // 25))
                 fixed_end = fixed.get('end_line') or min(total_lines, ((index + 1) * total_lines // 25))
-                # 合并原有信息
+                # Merge original information
                 fixed.update({
                     "number": chapter.get('number', f"{index:02d}"),
                     "title": chapter.get('title', default_title),
@@ -1080,9 +997,9 @@ class VibeReadingSkill:
                 })
                 return fixed
             else:
-                # 如果解析失败，使用默认值
+                # If parsing fails, use default values
                 default_title = chapter.get('title', f"Chapter {index+1}")
-                safe_title = default_title.replace('/', '_').replace('\\', '_')[:50]  # 清理标题用于文件名
+                safe_title = default_title.replace('/', '_').replace('\\', '_')[:50]  # Clean title for filename
                 return {
                     "number": chapter.get('number', f"{index:02d}"),
                     "title": default_title,
@@ -1091,10 +1008,10 @@ class VibeReadingSkill:
                     "filename": chapter.get('filename', f"{index:02d}_{safe_title}.txt")
                 }
         except Exception as e:
-            print(f"    ⚠️  AI 修复失败: {e}")
-            # 使用安全的默认值
+            print(f"    ⚠️  AI fix failed: {e}")
+            # Use safe default values
             default_title = chapter.get('title', f"Chapter {index+1}")
-            safe_title = default_title.replace('/', '_').replace('\\', '_')[:50]  # 清理标题用于文件名
+            safe_title = default_title.replace('/', '_').replace('\\', '_')[:50]  # Clean title for filename
             return {
                 "number": chapter.get('number', f"{index:02d}"),
                 "title": default_title,
@@ -1105,15 +1022,15 @@ class VibeReadingSkill:
     
     def _fix_chapter_format(self, raw_chapter: str, document_text: str, index: int) -> Dict:
         """
-        让 AI 修复章节格式
+        Let AI fix chapter format
         
         Args:
-            raw_chapter: 原始章节数据（可能是字符串或其他格式）
-            document_text: 文档文本
-            index: 章节索引
+            raw_chapter: Raw chapter data (may be string or other format)
+            document_text: Document text
+            index: Chapter index
             
         Returns:
-            修复后的章节字典
+            Fixed chapter dictionary
         """
         prompt = get_fix_chapter_format_prompt(raw_chapter, document_text)
         
@@ -1132,7 +1049,7 @@ class VibeReadingSkill:
             
             return fixed
         except:
-            # 如果修复失败，返回默认格式
+            # If fix fails, return default format
             return {
                 "number": f"{index:02d}",
                 "title": f"Chapter {index+1}",
@@ -1143,30 +1060,30 @@ class VibeReadingSkill:
     
     def further_breakdown(self, chapters: List[Dict], max_words_per_chapter: Optional[int] = None) -> None:
         """
-        阶段三：进一步拆分（采用 breakdown.md 的方法：在完整句子处断开）
+        Phase Three: Further Breakdown (using breakdown.md method: break at complete sentences)
         
         Args:
-            chapters: 章节信息列表
-            max_words_per_chapter: 每章最大字数（英文 word），固定为 7000
+            chapters: Chapter information list
+            max_words_per_chapter: Maximum words per chapter (English words), fixed at 7000
         """
         print("\n" + "=" * 70)
-        print("阶段三：进一步拆分（Further Breakdown）")
+        print("Phase Three: Further Breakdown")
         print("=" * 70)
         
-        # 固定使用 7000 英文单词作为限制
+        # Fixed use 7000 English words as limit
         max_words_per_chapter = 7000
         
-        print(f"每章最大字数限制：{max_words_per_chapter} 英文单词（固定值）")
+        print(f"Maximum words per chapter limit: {max_words_per_chapter} English words (fixed value)")
         
-        # 修复格式错误的章节
+        # Fix format errors in chapters
         fixed_chapters = []
         for i, chapter in enumerate(chapters):
             if not isinstance(chapter, dict):
-                print(f"  ⚠️  检测到格式错误的章节（索引 {i}），正在让 AI 修复...")
-                # 尝试读取文件来推断章节信息
+                print(f"  ⚠️  Detected format error in chapter (index {i}), asking AI to fix...")
+                # Try to read file to infer chapter information
                 all_files = sorted(self.chapters_dir.glob("*.txt"))
                 if i < len(all_files):
-                    # 使用文件名推断
+                    # Use filename to infer
                     filename = all_files[i].name
                     fixed = {
                         "number": f"{i:02d}",
@@ -1182,12 +1099,12 @@ class VibeReadingSkill:
             else:
                 fixed_chapters.append(chapter)
         
-        # 更新 chapters 列表
+        # Update chapters list
         if fixed_chapters != chapters:
             chapters[:] = fixed_chapters
         
         for chapter in chapters:
-            # 跳过非正文章节（不需要进一步拆分）
+            # Skip non-main text chapters (no need for further breakdown)
             if chapter.get('is_non_content', False):
                 continue
             
@@ -1199,33 +1116,33 @@ class VibeReadingSkill:
             
             chapter_content = read_file(chapter_path)
             
-            # 使用正确的英文单词统计（不是 token，也不是简单的 split）
+            # Use correct English word count (not tokens, not simple split)
             chapter_length = len(chapter_content)
-            word_count = count_words(chapter_content)  # 使用 count_words 函数统计英文单词
+            word_count = count_words(chapter_content)  # Use count_words function to count English words
             lines = chapter_content.split('\n')
             
-            print(f"\n评估章节: {filename}")
-            print(f"  字数：{word_count} 英文单词（不是 token）")
+            print(f"\nEvaluating chapter: {filename}")
+            print(f"  Word count: {word_count} English words (not tokens)")
             
-            # 如果章节不超过限制，跳过
+            # If chapter doesn't exceed limit, skip
             if word_count <= max_words_per_chapter:
-                print(f"  → 无需拆分（{word_count} <= {max_words_per_chapter}）")
+                print(f"  → No need to split ({word_count} <= {max_words_per_chapter})")
                 continue
             
-            # 使用 breakdown.md 的方法：在完整句子处断开
-            print(f"  → 需要拆分（{word_count} > {max_words_per_chapter}），使用 breakdown.md 的方法...")
+            # Use breakdown.md method: break at complete sentences
+            print(f"  → Need to split ({word_count} > {max_words_per_chapter}), using breakdown.md method...")
             
             try:
                 from .utils import split_at_sentences
                 chunks = split_at_sentences(chapter_content, max_words_per_chapter)
                 
-                print(f"  → 拆分成 {len(chunks)} 个部分（在完整句子处断开）")
+                print(f"  → Split into {len(chunks)} parts (broken at complete sentences)")
                 
                 base_name = filename.rsplit('.', 1)[0]
                 total_words = 0
                 
                 for i, chunk in enumerate(chunks, 1):
-                    # 如果只有一个部分，保持原文件名；否则添加 _partXX
+                    # If only one part, keep original filename; otherwise add _partXX
                     if len(chunks) == 1:
                         chunk_filename = filename
                     else:
@@ -1236,35 +1153,35 @@ class VibeReadingSkill:
                     
                     chunk_word_count = count_words(chunk)
                     total_words += chunk_word_count
-                    print(f"    ✓ {chunk_filename}: {chunk_word_count} 英文单词")
+                    print(f"    ✓ {chunk_filename}: {chunk_word_count} English words")
                 
-                # 验证字数（允许 5% 误差）
+                # Verify word count (allow 5% error)
                 if abs(total_words - word_count) > word_count * 0.05:
-                    print(f"  ⚠️  警告：拆分后总字数 ({total_words}) 与原始字数 ({word_count}) 差异较大")
+                    print(f"  ⚠️  Warning: Total words after split ({total_words}) differs significantly from original ({word_count})")
                 else:
-                    print(f"  ✅ 字数验证通过：{total_words} ≈ {word_count}")
+                    print(f"  ✅ Word count verification passed: {total_words} ≈ {word_count}")
                 
-                # 删除原始章节文件（因为已经拆分成多个部分）
+                # Delete original chapter file (because already split into multiple parts)
                 if chapter_path.exists() and len(chunks) > 1:
                     chapter_path.unlink()
-                    print(f"  ✓ 已删除原始文件: {filename}")
+                    print(f"  ✓ Deleted original file: {filename}")
                 
             except Exception as e:
-                print(f"  ❌ 拆分失败: {str(e)}")
+                print(f"  ❌ Split failed: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 continue
     
     def verify_chapters_completeness(self, original_text: str, chapters: List[Dict]) -> List[Dict]:
         """
-        验证章节拆分完整性：检查拆分后的章节字数是否与原文一致
+        Verify chapter split completeness: Check if split chapters' word count matches original text
         
         Args:
-            original_text: 原始文档文本
-            chapters: 章节信息列表
+            original_text: Original document text
+            chapters: Chapter information list
         """
         print("\n" + "=" * 70)
-        print("验证章节拆分完整性")
+        print("Verifying Chapter Split Completeness")
         print("=" * 70)
         
         original_word_count = count_words(original_text)
@@ -1273,16 +1190,16 @@ class VibeReadingSkill:
         combined_word_count = 0
         combined_char_count = 0
         
-        print(f"原文统计：")
-        print(f"  - 字符数：{original_char_count:,}")
-        print(f"  - 字数：{original_word_count:,}")
+        print(f"Original text statistics:")
+        print(f"  - Character count: {original_char_count:,}")
+        print(f"  - Word count: {original_word_count:,}")
         
-        print(f"\n拆分后章节统计：")
-        # 修复格式错误的章节
+        print(f"\nSplit chapter statistics:")
+        # Fix format errors in chapters
         fixed_chapters = []
         for i, chapter in enumerate(chapters):
             if not isinstance(chapter, dict):
-                print(f"  ⚠️  检测到格式错误的章节（索引 {i}），正在让 AI 修复...")
+                print(f"  ⚠️  Detected format error in chapter (index {i}), asking AI to fix...")
                 fixed = self._fix_chapter_format(str(chapter), original_text, i)
                 fixed_chapters.append(fixed)
                 chapter = fixed
@@ -1300,55 +1217,55 @@ class VibeReadingSkill:
                 combined_word_count += chapter_words
                 combined_char_count += chapter_chars
                 
-                print(f"  - {filename}: {chapter_chars:,} 字符, {chapter_words:,} 字")
+                print(f"  - {filename}: {chapter_chars:,} characters, {chapter_words:,} words")
         
-        # 更新 chapters 列表（如果修复了任何章节）
+        # Update chapters list (if any chapters were fixed)
         if fixed_chapters != chapters:
             chapters[:] = fixed_chapters
         
-        print(f"\n合并统计：")
-        print(f"  - 字符数：{combined_char_count:,}")
-        print(f"  - 字数：{combined_word_count:,}")
+        print(f"\nCombined statistics:")
+        print(f"  - Character count: {combined_char_count:,}")
+        print(f"  - Word count: {combined_word_count:,}")
         
-        # 计算差异
+        # Calculate differences
         char_diff = abs(original_char_count - combined_char_count)
         word_diff = abs(original_word_count - combined_word_count)
         char_diff_pct = (char_diff / original_char_count * 100) if original_char_count > 0 else 0
         word_diff_pct = (word_diff / original_word_count * 100) if original_word_count > 0 else 0
         
-        print(f"\n差异：")
-        print(f"  - 字符数差异：{char_diff:,} ({char_diff_pct:.2f}%)")
-        print(f"  - 字数差异：{word_diff:,} ({word_diff_pct:.2f}%)")
+        print(f"\nDifferences:")
+        print(f"  - Character difference: {char_diff:,} ({char_diff_pct:.2f}%)")
+        print(f"  - Word difference: {word_diff:,} ({word_diff_pct:.2f}%)")
         
         if char_diff_pct < 1 and word_diff_pct < 1:
-            print(f"\n✅ 验证通过：拆分后的内容与原文基本一致（差异 < 1%）")
+            print(f"\n✅ Verification passed: Split content basically matches original (difference < 1%)")
         elif char_diff_pct < 5 and word_diff_pct < 5:
-            print(f"\n⚠️  警告：拆分后的内容与原文有轻微差异（差异 < 5%），可能是由于格式处理")
+            print(f"\n⚠️  Warning: Split content has slight difference from original (difference < 5%), may be due to format processing")
         else:
-            print(f"\n❌ 错误：拆分后的内容与原文差异较大（差异 {char_diff_pct:.2f}% >= 5%）")
-            print(f"  让 AI 重新识别章节...")
+            print(f"\n❌ Error: Split content differs significantly from original (difference {char_diff_pct:.2f}% >= 5%)")
+            print(f"  Asking AI to re-identify chapters...")
             
-            # 让 AI 重新识别章节
-            retry_prompt = f"""之前的章节识别有严重错误，拆分后的内容与原文差异 {char_diff_pct:.2f}%，说明章节边界识别不准确。
+            # Let AI re-identify chapters
+            retry_prompt = f"""Previous chapter identification had serious errors, split content differs from original by {char_diff_pct:.2f}%, indicating chapter boundary identification is inaccurate.
 
-原文统计：
-- 字符数：{original_char_count:,}
-- 字数：{original_word_count:,}
+Original text statistics:
+- Character count: {original_char_count:,}
+- Word count: {original_word_count:,}
 
-拆分后统计：
-- 字符数：{combined_char_count:,}
-- 字数：{combined_word_count:,}
+Split statistics:
+- Character count: {combined_char_count:,}
+- Word count: {combined_word_count:,}
 
-**问题**：章节边界识别不准确，导致大量内容丢失。
+**Problem**: Chapter boundary identification is inaccurate, causing significant content loss.
 
-请重新仔细分析文档，**准确识别所有章节的起始和结束行号**，确保：
-1. 所有章节的行号覆盖整个文档（从第 1 行到最后一行）
-2. 相邻章节的行号连续（前一个章节的 end_line + 1 = 下一个章节的 start_line）
-3. 所有章节的 end_line 加起来应该等于文档总行数（或接近）
+Please carefully re-analyze the document, **accurately identify all chapters' start and end line numbers**, ensuring:
+1. All chapters' line numbers cover the entire document (from line 1 to last line)
+2. Adjacent chapters' line numbers are continuous (previous chapter's end_line + 1 = next chapter's start_line)
+3. All chapters' end_line should sum to document total lines (or close)
 
-文档总行数：{len(original_text.split(chr(10))):,} 行
+Document total lines: {len(original_text.split(chr(10))):,} lines
 
-请返回 JSON 格式的章节信息（必须准确）："""
+Please return chapter information in JSON format (must be accurate):"""
             
             try:
                 retry_response = self.client.generate_content(
@@ -1365,46 +1282,46 @@ class VibeReadingSkill:
                 
                 retry_chapters = retry_result.get('chapters', [])
                 if retry_chapters and len(retry_chapters) > 0:
-                    print(f"  ✓ AI 重新识别了 {len(retry_chapters)} 个章节")
-                    # 更新 chapters 列表
+                    print(f"  ✓ AI re-identified {len(retry_chapters)} chapters")
+                    # Update chapters list
                     chapters[:] = retry_chapters
-                    # 重新拆分章节
-                    print("  重新拆分章节...")
+                    # Re-split chapters
+                    print("  Re-splitting chapters...")
                     self.split_chapters(original_text, chapters)
-                    # 再次验证（递归调用，但限制深度）
-                    print("  再次验证...")
+                    # Verify again (recursive call, but limit depth)
+                    print("  Verifying again...")
                     return self.verify_chapters_completeness(original_text, chapters)
                 else:
-                    print(f"  ⚠️  AI 重新识别返回空列表")
+                    print(f"  ⚠️  AI re-identification returned empty list")
                     return chapters
             except Exception as e:
-                print(f"  ⚠️  AI 重新识别失败: {str(e)}")
+                print(f"  ⚠️  AI re-identification failed: {str(e)}")
                 return chapters
         
         return chapters
     
     def verify_further_breakdown_completeness(self, chapters: List[Dict]) -> None:
         """
-        验证进一步拆分后的完整性：检查每个章节拆分后的部分是否与原始章节一致
+        Verify further breakdown completeness: Check if each chapter's split parts match original chapter
         
         Args:
-            chapters: 章节信息列表
+            chapters: Chapter information list
         """
         print("\n" + "=" * 70)
-        print("验证进一步拆分完整性")
+        print("Verifying Further Breakdown Completeness")
         print("=" * 70)
         
         all_chapter_files = sorted(self.chapters_dir.glob("*.txt"))
         
-        # 修复格式错误的章节
+        # Fix format errors in chapters
         fixed_chapters = []
         for i, chapter in enumerate(chapters):
             if not isinstance(chapter, dict):
-                print(f"  ⚠️  检测到格式错误的章节（索引 {i}），正在让 AI 修复...")
-                # 尝试从字符串中提取信息或使用默认值
+                print(f"  ⚠️  Detected format error in chapter (index {i}), asking AI to fix...")
+                # Try to extract information from string or use default values
                 if isinstance(chapter, str):
-                    # 尝试读取对应的文件来推断
-                    # 如果字符串看起来像文件名，尝试使用它
+                    # Try to read corresponding file to infer
+                    # If string looks like filename, try using it
                     if chapter.endswith('.txt'):
                         fixed = {
                             "number": f"{i:02d}",
@@ -1428,29 +1345,29 @@ class VibeReadingSkill:
             else:
                 fixed_chapters.append(chapter)
         
-        # 更新 chapters 列表（如果修复了任何章节）
+        # Update chapters list (if any chapters were fixed)
         if fixed_chapters != chapters:
             chapters[:] = fixed_chapters
         
-        # 找出哪些是原始章节，哪些是拆分后的部分
+        # Find which are original chapters and which are split parts
         original_chapters = {ch.get('filename', '') for ch in chapters if isinstance(ch, dict)}
         split_parts = {}  # {original_filename: [part_files]}
         
         for file in all_chapter_files:
             filename = file.name
-            # 检查是否是拆分后的部分（包含 _part）
+            # Check if it's a split part (contains _part)
             if '_part' in filename:
-                # 提取原始章节名
+                # Extract original chapter name
                 base_name = filename.rsplit('_part', 1)[0] + '.txt'
                 if base_name not in split_parts:
                     split_parts[base_name] = []
                 split_parts[base_name].append(file)
         
         if not split_parts:
-            print("  没有需要验证的拆分章节")
+            print("  No split chapters to verify")
             return
         
-        # 验证每个被拆分的章节
+        # Verify each split chapter
         for original_filename, part_files in split_parts.items():
             original_path = self.chapters_dir / original_filename
             if not original_path.exists():
@@ -1463,8 +1380,8 @@ class VibeReadingSkill:
             combined_words = 0
             combined_chars = 0
             
-            print(f"\n验证章节: {original_filename}")
-            print(f"  原始：{original_chars:,} 字符, {original_words:,} 字")
+            print(f"\nVerifying chapter: {original_filename}")
+            print(f"  Original: {original_chars:,} characters, {original_words:,} words")
             
             for part_file in sorted(part_files):
                 part_content = read_file(part_file)
@@ -1474,9 +1391,9 @@ class VibeReadingSkill:
                 combined_words += part_words
                 combined_chars += part_chars
                 
-                print(f"  - {part_file.name}: {part_chars:,} 字符, {part_words:,} 字")
+                print(f"  - {part_file.name}: {part_chars:,} characters, {part_words:,} words")
             
-            print(f"  合并：{combined_chars:,} 字符, {combined_words:,} 字")
+            print(f"  Combined: {combined_chars:,} characters, {combined_words:,} words")
             
             char_diff = abs(original_chars - combined_chars)
             word_diff = abs(original_words - combined_words)
@@ -1484,31 +1401,31 @@ class VibeReadingSkill:
             word_diff_pct = (word_diff / original_words * 100) if original_words > 0 else 0
             
             if char_diff_pct < 1 and word_diff_pct < 1:
-                print(f"  ✅ 验证通过（差异 < 1%）")
+                print(f"  ✅ Verification passed (difference < 1%)")
             elif char_diff_pct < 5 and word_diff_pct < 5:
-                print(f"  ⚠️  轻微差异（差异 < 5%）")
+                print(f"  ⚠️  Slight difference (difference < 5%)")
             else:
-                print(f"  ❌ 差异较大（差异 >= 5%）")
+                print(f"  ❌ Significant difference (difference >= 5%)")
     
     def analyze_chapters(self, chapters: List[Dict]) -> None:
         """
-        阶段四：逐章深度阅读与分析
+        Phase Four: Chapter-by-chapter deep reading and analysis
         
         Args:
-            chapters: 章节信息列表
+            chapters: Chapter information list
         """
         print("\n" + "=" * 70)
-        print("阶段四：逐章深度阅读与分析")
+        print("Phase Four: Chapter-by-Chapter Deep Reading and Analysis")
         print("=" * 70)
         
-        # 修复格式错误的章节
+        # Fix format errors in chapters
         fixed_chapters = []
         for i, chapter in enumerate(chapters):
             if not isinstance(chapter, dict):
-                print(f"  ⚠️  检测到格式错误的章节（索引 {i}），正在让 AI 修复...")
-                # 尝试从文件名推断
+                print(f"  ⚠️  Detected format error in chapter (index {i}), asking AI to fix...")
+                # Try to infer from filename
                 all_files = sorted(self.chapters_dir.glob("*.txt"))
-                # 过滤掉 part 文件
+                # Filter out part files
                 all_files = [f for f in all_files if '_part' not in f.name]
                 if i < len(all_files):
                     filename = all_files[i].name
@@ -1526,7 +1443,7 @@ class VibeReadingSkill:
             else:
                 fixed_chapters.append(chapter)
         
-        # 更新 chapters 列表
+        # Update chapters list
         if fixed_chapters != chapters:
             chapters[:] = fixed_chapters
         
@@ -1536,38 +1453,38 @@ class VibeReadingSkill:
             filename = chapter.get('filename', '')
             chapter_path = self.chapters_dir / filename
             
-            # 如果原始文件不存在，检查是否有 part 文件
+            # If original file doesn't exist, check if there are part files
             if not chapter_path.exists():
-                # 查找对应的 part 文件
-                base_name = filename.rsplit('.', 1)[0]  # 去掉 .txt 扩展名
+                # Find corresponding part files
+                base_name = filename.rsplit('.', 1)[0]  # Remove .txt extension
                 part_files = sorted(self.chapters_dir.glob(f"{base_name}_part*.txt"))
                 
                 if part_files:
-                    # 为每个 part 单独生成 summary
-                    print(f"\n分析章节 {i+1}/{len(chapters)}: {filename} (由 {len(part_files)} 个部分组成，将分别为每个部分生成总结)")
+                    # Generate summary for each part separately
+                    print(f"\nAnalyzing chapter {i+1}/{len(chapters)}: {filename} (consists of {len(part_files)} parts, will generate summary for each part separately)")
                     
-                    # 为每个 part 生成独立的 summary
+                    # Generate independent summary for each part
                     for part_idx, part_file in enumerate(part_files, 1):
                         try:
                             part_content = read_file(part_file)
                         except Exception as e:
-                            print(f"    ⚠️  读取 part 文件失败: {part_file.name}, 错误: {str(e)}")
+                            print(f"    ⚠️  Failed to read part file: {part_file.name}, error: {str(e)}")
                             continue
                         
-                        # 尝试从 part 内容中提取标题（前几行）
+                        # Try to extract title from part content (first few lines)
                         part_lines = part_content.split('\n')[:20]
                         part_title = None
                         for line in part_lines:
-                            # 查找可能的标题（大写、单独一行、不太长）
+                            # Find possible title (uppercase, single line, not too long)
                             stripped = line.strip()
                             if stripped and len(stripped) < 100 and not stripped.startswith(('Chapter', 'CHAPTER', 'Part')):
-                                # 检查是否像标题（首字母大写、没有句号）
+                                # Check if looks like title (first letter uppercase, no period)
                                 if stripped[0].isupper() and '.' not in stripped and len(stripped.split()) < 15:
                                     part_title = stripped
                                     break
                         
                         if not part_title:
-                            part_title = f"{chapter.get('title', base_name)} - 第 {part_idx} 部分"
+                            part_title = f"{chapter.get('title', base_name)} - Part {part_idx}"
                         
                         part_metadata = {
                             "number": f"{chapter.get('number', '')}_part{part_idx:02d}",
@@ -1575,22 +1492,22 @@ class VibeReadingSkill:
                             "filename": part_file.name
                         }
                         
-                        print(f"  分析部分 {part_idx}/{len(part_files)}: {part_file.name}")
+                        print(f"  Analyzing part {part_idx}/{len(part_files)}: {part_file.name}")
                         
-                        # 让 AI 决定需要多少上下文和内容
+                        # Let AI decide how much context and content needed
                         part_length = len(part_content)
                         prev_summary_length = len(previous_summary) if previous_summary else 0
                         
                         context_strategy_prompt = get_context_strategy_prompt(part_length, prev_summary_length)
                         
-                        print(f"    AI 正在决定分析策略...")
+                        print(f"    AI is deciding analysis strategy...")
                         context_strategy_response = self.client.generate_content(
                             context_strategy_prompt,
                             system_instruction=self.system_instruction,
                             temperature=0.3
                         )
                         
-                        # 解析策略
+                        # Parse strategy
                         try:
                             strategy_match = re.search(r'\{.*\}', context_strategy_response, re.DOTALL)
                             if strategy_match:
@@ -1598,7 +1515,7 @@ class VibeReadingSkill:
                             else:
                                 context_strategy = json.loads(context_strategy_response)
                             
-                            # 决定使用多少前一章总结
+                            # Decide how much previous chapter summary to use
                             prev_to_use = context_strategy.get('previous_summary_to_use', 'all')
                             if prev_to_use == 'all' or not previous_summary:
                                 context = previous_summary if previous_summary else ""
@@ -1606,7 +1523,7 @@ class VibeReadingSkill:
                                 prev_len = int(prev_to_use) if isinstance(prev_to_use, (int, str)) and str(prev_to_use).isdigit() else len(previous_summary)
                                 context = previous_summary[:prev_len] if previous_summary else ""
                             
-                            # 决定读取多少章节内容
+                            # Decide how much chapter content to read
                             content_to_read = context_strategy.get('chapter_content_to_read', 'all')
                             if content_to_read == 'all':
                                 analysis_content = part_content
@@ -1614,15 +1531,15 @@ class VibeReadingSkill:
                                 content_len = int(content_to_read) if isinstance(content_to_read, (int, str)) and str(content_to_read).isdigit() else len(part_content)
                                 analysis_content = part_content[:content_len]
                         except:
-                            # 如果 AI 决策失败，使用全部内容
+                            # If AI decision fails, use all content
                             context = previous_summary if previous_summary else ""
                             analysis_content = part_content
                         
-                        # 构建分析提示词
-                        context_str = f"前一章总结（用于上下文连贯）：\n{context}\n\n" if context else ""
+                        # Build analysis prompt
+                        context_str = f"Previous chapter summary (for contextual coherence):\n{context}\n\n" if context else ""
                         prompt = get_chapter_analysis_prompt(context_str, part_metadata, analysis_content)
                         
-                        print(f"    AI 正在分析...")
+                        print(f"    AI is analyzing...")
                         try:
                             part_summary = self.client.generate_content(
                                 prompt,
@@ -1630,30 +1547,30 @@ class VibeReadingSkill:
                                 temperature=0.7
                             )
                             
-                            # 保存 part 的总结
-                            part_base_name = part_file.stem  # 例如 "02_Main_Body_part01"
+                            # Save part summary
+                            part_base_name = part_file.stem  # e.g., "02_Main_Body_part01"
                             part_summary_filename = f"{part_base_name}_summary.md"
                             part_summary_path = self.summaries_dir / part_summary_filename
                             
                             write_file(part_summary_path, part_summary)
-                            print(f"    ✓ 总结已保存: {part_summary_filename}")
+                            print(f"    ✓ Summary saved: {part_summary_filename}")
                             
-                            # 更新前章总结（用于下一部分）
+                            # Update previous chapter summary (for next part)
                             previous_summary = part_summary
                         except Exception as e:
-                            print(f"    ⚠️  处理 part {part_idx} 失败: {str(e)}")
+                            print(f"    ⚠️  Failed to process part {part_idx}: {str(e)}")
                             import traceback
                             traceback.print_exc()
-                            # 继续处理下一个 part
+                            # Continue processing next part
                             continue
                     
-                    # 跳过原始章节的处理（因为已经为每个 part 生成了 summary）
+                    # Skip original chapter processing (because already generated summary for each part)
                     continue
                 else:
-                    print(f"\n⚠️  跳过: {filename} (文件不存在，也没有找到 part 文件)")
+                    print(f"\n⚠️  Skipping: {filename} (file doesn't exist, and no part files found)")
                     continue
             else:
-                print(f"\n分析章节 {i+1}/{len(chapters)}: {filename}")
+                print(f"\nAnalyzing chapter {i+1}/{len(chapters)}: {filename}")
                 chapter_content = read_file(chapter_path)
             
             chapter_metadata = {
@@ -1662,20 +1579,20 @@ class VibeReadingSkill:
                 "filename": filename
             }
             
-            # 让 AI 决定需要多少上下文和内容
+            # Let AI decide how much context and content needed
             chapter_length = len(chapter_content)
             prev_summary_length = len(previous_summary) if previous_summary else 0
             
             context_strategy_prompt = get_context_strategy_prompt(chapter_length, prev_summary_length)
             
-            print(f"  AI 正在决定分析策略...")
+            print(f"  AI is deciding analysis strategy...")
             context_strategy_response = self.client.generate_content(
                 context_strategy_prompt,
                 system_instruction=self.system_instruction,
                 temperature=0.3
             )
             
-            # 解析策略
+            # Parse strategy
             try:
                 strategy_match = re.search(r'\{.*\}', context_strategy_response, re.DOTALL)
                 if strategy_match:
@@ -1683,7 +1600,7 @@ class VibeReadingSkill:
                 else:
                     context_strategy = json.loads(context_strategy_response)
                 
-                # 决定使用多少前一章总结
+                # Decide how much previous chapter summary to use
                 prev_to_use = context_strategy.get('previous_summary_to_use', 'all')
                 if prev_to_use == 'all' or not previous_summary:
                     context = previous_summary if previous_summary else ""
@@ -1691,7 +1608,7 @@ class VibeReadingSkill:
                     prev_len = int(prev_to_use) if isinstance(prev_to_use, (int, str)) and str(prev_to_use).isdigit() else len(previous_summary)
                     context = previous_summary[:prev_len] if previous_summary else ""
                 
-                # 决定读取多少章节内容
+                # Decide how much chapter content to read
                 content_to_read = context_strategy.get('chapter_content_to_read', 'all')
                 if content_to_read == 'all':
                     analysis_content = chapter_content
@@ -1699,42 +1616,42 @@ class VibeReadingSkill:
                     content_len = int(content_to_read) if isinstance(content_to_read, (int, str)) and str(content_to_read).isdigit() else len(chapter_content)
                     analysis_content = chapter_content[:content_len]
             except:
-                # 如果 AI 决策失败，使用全部内容
+                # If AI decision fails, use all content
                 context = previous_summary if previous_summary else ""
                 analysis_content = chapter_content
             
-            # 构建分析提示词
-            context_str = f"前一章总结（用于上下文连贯）：\n{context}\n\n" if context else ""
+            # Build analysis prompt
+            context_str = f"Previous chapter summary (for contextual coherence):\n{context}\n\n" if context else ""
             prompt = get_chapter_analysis_prompt(context_str, chapter_metadata, analysis_content)
             
-            print("  AI 正在分析...")
+            print("  AI is analyzing...")
             summary = self.client.generate_content(
                 prompt,
                 system_instruction=self.system_instruction,
                 temperature=0.7
             )
             
-            # 保存总结
+            # Save summary
             base_name = filename.rsplit('.', 1)[0]
             summary_filename = f"{base_name}_summary.md"
             summary_path = self.summaries_dir / summary_filename
             
             write_file(summary_path, summary)
-            print(f"  ✓ 总结已保存: {summary_filename}")
+            print(f"  ✓ Summary saved: {summary_filename}")
             
-            # 更新前章总结（用于下一章）
-            # AI 已经在 analyze_chapters 中决定使用多少上下文，这里保存完整总结
+            # Update previous chapter summary (for next chapter)
+            # AI has already decided how much context to use in analyze_chapters, save full summary here
             previous_summary = summary
     
     def generate_outputs(self) -> None:
         """
-        阶段五：生成 PDF 和 HTML 输出
+        Phase Five: Generate PDF and HTML outputs
         """
         print("\n" + "=" * 70)
-        print("阶段五：格式转换与输出")
+        print("Phase Five: Format Conversion and Output")
         print("=" * 70)
         
-        # 检查是否有封面文件（支持 .md 和没有扩展名）
+        # Check if cover file exists (support .md and no extension)
         cover_info = None
         cover_file_md = self.summaries_dir / "00_Cover.md"
         cover_file_no_ext = self.summaries_dir / "00_Cover"
@@ -1743,80 +1660,80 @@ class VibeReadingSkill:
             try:
                 cover_content = read_file(cover_file_md)
                 cover_info = self._parse_cover_file(cover_content)
-                print(f"  ✓ 找到封面文件: {cover_file_md}")
+                print(f"  ✓ Found cover file: {cover_file_md}")
             except Exception as e:
-                print(f"  ⚠️  读取封面文件失败: {e}")
+                print(f"  ⚠️  Failed to read cover file: {e}")
         elif cover_file_no_ext.exists():
             try:
                 cover_content = read_file(cover_file_no_ext)
                 cover_info = self._parse_cover_file(cover_content)
-                print(f"  ✓ 找到封面文件: {cover_file_no_ext}")
+                print(f"  ✓ Found cover file: {cover_file_no_ext}")
             except Exception as e:
-                print(f"  ⚠️  读取封面文件失败: {e}")
+                print(f"  ⚠️  Failed to read cover file: {e}")
         
-        # 收集所有总结文件（排除封面文件）
+        # Collect all summary files (exclude cover file)
         summary_files = sorted([f for f in self.summaries_dir.glob("*.md") if f.name != "00_Cover.md"])
         
         if not summary_files:
-            print("⚠️  没有找到总结文件")
+            print("⚠️  No summary files found")
             return
         
-        # 合并所有 Markdown 文件
-        print("\n合并 Markdown 文件...")
+        # Merge all Markdown files
+        print("\nMerging Markdown files...")
         combined_content = ""
         
         for i, summary_file in enumerate(summary_files):
             content = read_file(summary_file)
             
-            # 提取章节标题（第一行的 # 标题）
+            # Extract chapter title (first line's # title)
             title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
             if title_match:
                 chapter_title = title_match.group(1).strip()
             else:
-                # 如果没有找到标题，使用文件名
+                # If no title found, use filename
                 chapter_title = summary_file.stem.replace('_summary', '').replace('_', ' ')
             
-            # 如果不是第一个章节，添加分割线
+            # If not first chapter, add divider
             if i > 0:
                 combined_content += "\n\n<div class='chapter-divider'></div>\n\n"
             
-            # 确保章节标题存在
-            # 如果原内容没有标题，添加一个；如果有标题，直接使用原内容
+            # Ensure chapter title exists
+            # If original content has no title, add one; if has title, use original content directly
             if not title_match:
                 combined_content += f"# {chapter_title}\n\n"
                 combined_content += content
             else:
-                # 如果已经有标题，直接添加内容（标题已经在内容中）
+                # If already has title, add content directly (title already in content)
                 combined_content += content
             
-            # 章节之间添加空行
+            # Add empty lines between chapters
             combined_content += "\n\n"
         
-        # 生成 PDF（使用新的 pdf_generator 模块）
+        # Generate PDF (using new pdf_generator module)
         try:
             from .pdf_generator import generate_pdf_from_combined_content
             from datetime import datetime
             
-            print("生成 PDF...")
+            print("Generating PDF...")
             
-            # 获取书籍信息
-            # 优先使用封面文件中的信息
+            # Get book information
+            # Priority: use information from cover file
             if cover_info:
-                book_title = cover_info.get('title', '书籍总结')
-                book_author = cover_info.get('author', '未知作者')
+                book_title = cover_info.get('title', 'Book Summary')
+                book_author = cover_info.get('author', 'Unknown Author')
                 gen_date = cover_info.get('date', datetime.now().strftime("%Y/%m/%d"))
                 model_name = cover_info.get('model', self.client.model_name)
             else:
-                # 从第一个总结文件推断，或使用通用标题
-                book_title = "书籍总结"
-                book_author = "未知作者"
+                # Infer from first summary file, or use generic title
+                book_title = "Book Summary"
+                book_author = "Unknown Author"
                 
-                # 尝试从输入文件名提取作者和标题信息（使用 pdf_generator 的函数）
+                # Try to extract author and title information from input filename (using pdf_generator function)
                 try:
                     from .pdf_generator import extract_book_info_from_filename
                     if hasattr(self, 'input_file_path') and self.input_file_path:
                         extracted_title, extracted_author = extract_book_info_from_filename(self.input_file_path.name)
-                        if extracted_title and extracted_title != "书籍摘要":
+                        if extracted_title and extracted_title != "Book Summary":
                             book_title = extracted_title
                         if extracted_author:
                             book_author = extracted_author
@@ -1824,12 +1741,12 @@ class VibeReadingSkill:
                         input_file = Path(self.input_path)
                         if input_file.exists():
                             extracted_title, extracted_author = extract_book_info_from_filename(input_file.name)
-                            if extracted_title and extracted_title != "书籍摘要":
+                            if extracted_title and extracted_title != "Book Summary":
                                 book_title = extracted_title
                             if extracted_author:
                                 book_author = extracted_author
                 except Exception as e:
-                    # 如果提取失败，使用旧的方法作为后备
+                    # If extraction fails, use old method as fallback
                     if hasattr(self, 'input_file_path') and self.input_file_path:
                         input_filename = self.input_file_path.stem
                         if ' - ' in input_filename:
@@ -1837,39 +1754,40 @@ class VibeReadingSkill:
                             if len(parts) == 2:
                                 book_author = parts[0].strip()
                                 potential_title = parts[1].strip()
-                                if len(potential_title) < 100:  # 合理的标题长度
+                                if len(potential_title) < 100:  # Reasonable title length
                                     book_title = potential_title
                 
                 if summary_files:
                     first_summary = read_file(summary_files[0])
-                    # 尝试提取标题
+                    # Try to extract title
                     title_match = re.search(r'^#\s+(.+)$', first_summary, re.MULTILINE)
                     if title_match:
-                        # 如果第一个章节标题看起来像书名，使用它；否则使用通用标题
+                        # If first chapter title looks like book title, use it; otherwise use generic title
                         potential_title = title_match.group(1).strip()
-                        # 如果标题太长（可能是章节名而不是书名），使用通用标题
-                        if len(potential_title) < 50 and book_title == "书籍总结":
+                        # If title too long (might be chapter name not book title), use generic title
+                        if len(potential_title) < 50 and book_title == "Book Summary":
                             book_title = potential_title
                 
-                # 生成日期
+                # Generation date
                 gen_date = datetime.now().strftime("%Y/%m/%d")
                 
-                # 获取模型名称
+                # Get model name
                 model_name = self.client.model_name
             
-            # 收集目录项
+            # Collect table of contents items
             toc_items = []
             for summary_file in summary_files:
                 content = read_file(summary_file)
                 title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
                 if title_match:
                     title = title_match.group(1).strip()
-                    # 标准化标题（移除"第x章"格式）
+                    # Standardize title (remove "Chapter X" format)
                     title = re.sub(r'^第[一二三四五六七八九十百千万\d]+章[：:\s]*', '', title)
                     title = re.sub(r'^第\d+章[：:\s]*', '', title)
+                    title = re.sub(r'^Chapter\s+\d+[:\s]*', '', title, flags=re.IGNORECASE)
                     toc_items.append(title.strip())
             
-            # 使用新的 PDF 生成模块
+            # Use new PDF generation module
             pdf_path = self.pdf_dir / "book_summary.pdf"
             generate_pdf_from_combined_content(
                 combined_content, 
@@ -1879,40 +1797,40 @@ class VibeReadingSkill:
                 model_name,
                 gen_date,
                 toc_items,
-                summaries_dir=self.summaries_dir  # 传递 summaries_dir 以支持 00_Cover 文件
+                summaries_dir=self.summaries_dir  # Pass summaries_dir to support 00_Cover file
             )
             
-            print(f"  ✓ PDF 已生成: {pdf_path}")
+            print(f"  ✓ PDF generated: {pdf_path}")
         except ImportError as e:
-            print("  ⚠️  playwright 未安装，跳过 PDF 生成")
-            print("  提示: 要启用 PDF 生成功能，需要完成以下两步:")
+            print("  ⚠️  playwright not installed, skipping PDF generation")
+            print("  Tip: To enable PDF generation, complete these two steps:")
             print("    1. pip install playwright")
-            print("    2. playwright install chromium  ← 这一步很重要！")
-            print("  详细说明请查看 README.md 中的「安装 PDF 生成依赖」部分")
+            print("    2. playwright install chromium  ← This step is important!")
+            print("  For details, see the 'Installing PDF Generation Dependencies' section in README.md")
         except RuntimeError as e:
-            print(f"  ⚠️  PDF 生成失败: {str(e)}")
-            print("  详细说明请查看 README.md 中的「安装 PDF 生成依赖」部分")
+            print(f"  ⚠️  PDF generation failed: {str(e)}")
+            print("  For details, see the 'Installing PDF Generation Dependencies' section in README.md")
         except Exception as e:
             error_msg = str(e)
-            print(f"  ⚠️  PDF 生成失败: {error_msg}")
+            print(f"  ⚠️  PDF generation failed: {error_msg}")
             import traceback
             traceback.print_exc()
         
-        # 生成 HTML 交互界面
-        print("生成 HTML 交互界面...")
+        # Generate HTML interactive interface
+        print("Generating HTML interactive interface...")
         self._generate_html_interface(summary_files)
-        print(f"  ✓ HTML 已生成: {self.html_dir / 'interactive_reader.html'}")
+        print(f"  ✓ HTML generated: {self.html_dir / 'interactive_reader.html'}")
     
     def _generate_pdf_html(self, content: str, book_title: str, book_author: str, model_name: str, gen_date: str, toc_items: list = None) -> str:
-        """生成包含封面和样式的 PDF HTML（用于 Playwright）"""
+        """Generate PDF HTML with cover and styling (for Playwright)"""
         import markdown
         
-        # 清理文本（移除不需要的文字）
+        # Clean text (remove unwanted text)
         def clean_text(text):
-            """移除不需要的文字，特别是第一行的Expert Ghost-Reader相关文字"""
+            """Remove unwanted text, especially first line Expert Ghost-Reader related text"""
             lines = text.split('\n')
             
-            # 检查并移除第一行的Expert Ghost-Reader相关文字
+            # Check and remove first line Expert Ghost-Reader related text
             if lines:
                 first_line = lines[0].strip()
                 patterns = [
@@ -1921,59 +1839,61 @@ class VibeReadingSkill:
                     r'Expert Ghost-Reader.*?重写。',
                     r'好的，.*?Expert Ghost-Reader.*?已就位.*?重写。',
                     r'Expert Ghost-Reader.*?已就位.*?重写。',
+                    r'Okay, Expert Ghost-Reader is in position.*?rewrite\.',
                 ]
                 
                 for pattern in patterns:
                     if re.match(pattern, first_line):
-                        lines = lines[1:]  # 移除第一行
+                        lines = lines[1:]  # Remove first line
                         break
             
-            # 重新组合文本
+            # Recombine text
             text = '\n'.join(lines)
             
-            # 移除可能残留的多个空行
+            # Remove possible remaining multiple empty lines
             text = re.sub(r'\n{3,}', '\n\n', text)
             
             return text.strip()
         
-        # 标准化标题
+        # Standardize title
         def standardize_title(title):
-            """标准化标题，移除'第x章'或'第x章：'格式"""
+            """Standardize title, remove 'Chapter X' or 'Chapter X:' format"""
             title = re.sub(r'^第[一二三四五六七八九十百千万\d]+章[：:\s]*', '', title)
             title = re.sub(r'^第\d+章[：:\s]*', '', title)
+            title = re.sub(r'^Chapter\s+\d+[:\s]*', '', title, flags=re.IGNORECASE)
             return title.strip()
         
-        # 清理内容
+        # Clean content
         content = clean_text(content)
         
-        # 转换 Markdown 为 HTML
+        # Convert Markdown to HTML
         html_body = markdown.markdown(content, extensions=['extra', 'codehilite', 'tables'])
         
-        # 处理章节分隔：为每个 h1 添加 chapter 类（除了第一个）
-        # 先找到所有 h1 标签
+        # Process chapter separation: add chapter class to each h1 (except first)
+        # Find all h1 tags first
         h1_pattern = r'<h1>(.*?)</h1>'
         h1_matches = list(re.finditer(h1_pattern, html_body))
         
         if len(h1_matches) > 1:
-            # 从第二个 h1 开始添加 chapter 类
+            # Start from second h1 to add chapter class
             offset = 0
-            for i, match in enumerate(h1_matches[1:], start=1):  # 跳过第一个
+            for i, match in enumerate(h1_matches[1:], start=1):  # Skip first
                 start_pos = match.start() + offset
-                # 在 h1 前添加 <div class="chapter">
+                # Add <div class="chapter"> before h1
                 html_body = html_body[:start_pos] + '<div class="chapter">' + html_body[start_pos:]
                 offset += len('<div class="chapter">')
-                # 在对应的 </h1> 后添加 </div>
+                # Add </div> after corresponding </h1>
                 end_pos = match.end() + offset
                 html_body = html_body[:end_pos] + '</div>' + html_body[end_pos:]
                 offset += len('</div>')
         
-        # 使用模板生成 HTML
+        # Use template to generate HTML
         return get_pdf_html_template(html_body, book_title, book_author, model_name, gen_date, toc_items)
     
     def _parse_cover_file(self, cover_content: str) -> dict:
-        """解析封面文件内容
+        """Parse cover file content
         
-        格式示例：
+        Format example:
         CAESAR - life of a colossus
         
         by Adrian Goldsworthy
@@ -1990,33 +1910,33 @@ class VibeReadingSkill:
         if not lines:
             return cover_info
         
-        # 第一行通常是书名（可能包含 " - " 分隔符，如 "CAESAR - life of a colossus"）
+        # First line is usually book title (may contain " - " separator, like "CAESAR - life of a colossus")
         title_line = lines[0]
-        # 如果包含 " - "，通常是 "TITLE - subtitle" 格式，整个作为书名
-        # 或者可能是 "AUTHOR - TITLE"，但通常第一行就是书名
+        # If contains " - ", usually "TITLE - subtitle" format, use whole as book title
+        # Or might be "AUTHOR - TITLE", but usually first line is book title
         cover_info['title'] = title_line
         
-        # 查找 "by" 开头的作者行
+        # Find "by" author line
         for line in lines:
             if line.lower().startswith('by '):
                 cover_info['author'] = line[3:].strip()
                 break
         
-        # 查找 "Summarized by" 行
+        # Find "Summarized by" line
         for line in lines:
             if 'summarized by' in line.lower():
-                # 提取模型名称（可能在括号中）
+                # Extract model name (might be in parentheses)
                 model_match = re.search(r'\(([^)]+)\)', line)
                 if model_match:
                     cover_info['model'] = model_match.group(1).strip()
                 break
         
-        # 查找日期（格式：YYYY/MM/DD 或 YYYY-MM-DD）
+        # Find date (format: YYYY/MM/DD or YYYY-MM-DD)
         for line in lines:
             date_match = re.search(r'(\d{4}[/-]\d{1,2}[/-]\d{1,2})', line)
             if date_match:
                 date_str = date_match.group(1)
-                # 统一格式为 YYYY/MM/DD
+                # Unified format as YYYY/MM/DD
                 date_str = date_str.replace('-', '/')
                 cover_info['date'] = date_str
                 break
@@ -2024,57 +1944,57 @@ class VibeReadingSkill:
         return cover_info
     
     def _get_pdf_css(self) -> str:
-        """返回 PDF 专业排版 CSS"""
+        """Return PDF professional layout CSS"""
         return get_pdf_css()
     
     def _get_html_css(self) -> str:
-        """返回专业 HTML CSS 样式"""
+        """Return professional HTML CSS styles"""
         return get_html_css()
     
     def _get_html_javascript(self, summary_files: List[Path]) -> str:
-        """返回 HTML JavaScript 代码"""
+        """Return HTML JavaScript code"""
         import re
         
-        # 读取总结文件，提取标题和内容
+        # Read summary files, extract titles and content
         summaries_data = {}
         chapter_titles = {}
-        chapter_originals = {}  # 存储章节原文
+        chapter_originals = {}  # Store chapter original text
         
         for f in summary_files:
             key = str(f.stem)
             content = read_file(f)
             summaries_data[key] = content
             
-            # 提取标题（第一行的 # 标题）
+            # Extract title (first line's # title)
             title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
             if title_match:
                 chapter_titles[key] = title_match.group(1).strip()
             else:
-                # 如果没有找到标题，使用文件名
+                # If no title found, use filename
                 chapter_titles[key] = key.replace('_summary', '').replace('_', ' ')
             
-            # 读取对应的章节原文
-            # 总结文件名格式：XX_Chapter_summary.md
-            # 原文文件名格式：XX_Chapter.txt 或 XX_Chapter_part01.txt 等
+            # Read corresponding chapter original text
+            # Summary filename format: XX_Chapter_summary.md
+            # Original text filename format: XX_Chapter.txt or XX_Chapter_part01.txt etc.
             original_key = key.replace('_summary', '')
             
-            # 尝试查找原文文件（可能是单个文件或多个 part 文件）
+            # Try to find original text file (might be single file or multiple part files)
             original_files = sorted(self.chapters_dir.glob(f"{original_key}.txt"))
             if not original_files:
-                # 如果没有找到，尝试查找 part 文件
+                # If not found, try to find part files
                 original_files = sorted(self.chapters_dir.glob(f"{original_key}_part*.txt"))
             
             if original_files:
-                # 合并所有 part 文件的内容
+                # Merge all part files' content
                 original_content = ""
                 for orig_file in original_files:
                     original_content += read_file(orig_file) + "\n\n"
                 chapter_originals[key] = original_content.strip()
             else:
-                # 如果找不到原文，使用空字符串
+                # If can't find original text, use empty string
                 chapter_originals[key] = ""
         
-        # 获取 API key 和模型名称
+        # Get API key and model name
         api_key = self.client.api_key
         model_name = self.client.model_name
         
@@ -2083,7 +2003,7 @@ class VibeReadingSkill:
         )
     
     def _generate_html_interface(self, summary_files: List[Path]) -> None:
-        """生成 HTML 交互界面（专业美工设计）"""
+        """Generate HTML interactive interface (professional graphic design)"""
         html_css = self._get_html_css()
         html_javascript = self._get_html_javascript(summary_files)
         html_content = get_html_interface_template(html_css, html_javascript, len(summary_files))
@@ -2091,89 +2011,89 @@ class VibeReadingSkill:
     
     def process(self, input_path: Path) -> None:
         """
-        处理完整流程
+        Process complete workflow
         
-        包含以下阶段：
-        1. 文档预处理：EPUB → TXT 转换（如需要）
-        2. 智能章节识别：AI 自动识别章节结构（带渐进式预览和错误修复）
-        3. 章节拆分：AI 评估章节长度，必要时拆分
-        4. 逐章分析：AI 深度阅读每章，生成总结（带智能重试机制）
-        5. 格式输出：生成 Markdown、PDF（自动生成封面）、HTML
+        Includes the following phases:
+        1. Document preprocessing: EPUB → TXT conversion (if needed)
+        2. Intelligent chapter identification: AI automatically identifies chapter structure (with progressive preview and error fixing)
+        3. Chapter splitting: AI evaluates chapter length, split if necessary
+        4. Chapter-by-chapter analysis: AI deep reads each chapter, generates summary (with intelligent retry mechanism)
+        5. Format output: Generate Markdown, PDF (automatically generate cover), HTML
         
         Args:
-            input_path: 输入文件路径
+            input_path: Input file path
         """
-        # 保存输入文件路径，用于后续提取元数据
+        # Save input file path for later metadata extraction
         self.input_file_path = Path(input_path)
         print("=" * 70)
-        print("Vibe Reading Skill - 开始处理")
+        print("Vibe Reading Skill - Start Processing")
         print("=" * 70)
         
-        # 阶段一：预处理
+        # Phase One: Preprocessing
         document_text = self.preprocess_document(input_path)
         
-        # 阶段二：章节识别
+        # Phase Two: Chapter identification
         chapters = self.identify_chapters(document_text)
         if not chapters or len(chapters) == 0:
-            print("⚠️  未能识别章节，但会继续尝试处理...")
-            # 不再直接返回，而是继续尝试处理
-            # 如果确实无法识别，会在后续步骤中处理
+            print("⚠️  Failed to identify chapters, but will continue trying to process...")
+            # No longer return directly, but continue trying to process
+            # If really can't identify, will handle in subsequent steps
         
-        # 拆分章节
+        # Split chapters
         self.split_chapters(document_text, chapters)
         
-        # 验证章节拆分完整性（如果差距太大，会重新识别并更新 chapters）
+        # Verify chapter split completeness (if gap too large, will re-identify and update chapters)
         chapters = self.verify_chapters_completeness(document_text, chapters)
         
-        # 阶段三：进一步拆分
-        # 固定使用 7000 英文单词
+        # Phase Three: Further breakdown
+        # Fixed use 7000 English words
         self.further_breakdown(chapters, max_words_per_chapter=7000)
         
-        # 验证进一步拆分后的完整性
+        # Verify further breakdown completeness
         self.verify_further_breakdown_completeness(chapters)
         
-        # 阶段四：分析
+        # Phase Four: Analysis
         self.analyze_chapters(chapters)
         
-        # 阶段五：生成输出
+        # Phase Five: Generate outputs
         self.generate_outputs()
         
         print("\n" + "=" * 70)
-        print("处理完成！")
-        print(f"输入目录: {self.input_dir}")
-        print(f"章节文件: {self.chapters_dir}")
-        print(f"总结文件: {self.summaries_dir}")
-        print(f"PDF 文件: {self.pdf_dir}")
-        print(f"HTML 文件: {self.html_dir}")
+        print("Processing complete!")
+        print(f"Input directory: {self.input_dir}")
+        print(f"Chapter files: {self.chapters_dir}")
+        print(f"Summary files: {self.summaries_dir}")
+        print(f"PDF files: {self.pdf_dir}")
+        print(f"HTML files: {self.html_dir}")
         print("=" * 70)
 
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description="Vibe Reading Skill - 智能阅读分析")
-    parser.add_argument("--input", "-i", type=Path, help="输入文件路径（EPUB 或 TXT），如果不提供则从 input/ 目录读取")
-    parser.add_argument("--base-dir", "-d", type=Path, default=Path("."), help="项目根目录（默认: 当前目录）")
-    parser.add_argument("--api-key", type=str, help="Gemini API Key（可选，也可通过 .env 文件设置）")
+    """Main function"""
+    parser = argparse.ArgumentParser(description="Vibe Reading Skill - Intelligent Reading Analysis")
+    parser.add_argument("--input", "-i", type=Path, help="Input file path (EPUB or TXT), if not provided will read from input/ directory")
+    parser.add_argument("--base-dir", "-d", type=Path, default=Path("."), help="Project root directory (default: current directory)")
+    parser.add_argument("--api-key", type=str, help="Gemini API Key (optional, can also be set via .env file)")
     
     args = parser.parse_args()
     
     skill = VibeReadingSkill(api_key=args.api_key, base_dir=args.base_dir)
     
-    # 确定输入文件
+    # Determine input file
     if args.input:
         input_path = Path(args.input)
         if not input_path.exists():
-            print(f"错误: 输入文件不存在: {input_path}")
+            print(f"Error: Input file does not exist: {input_path}")
             return
     else:
-        # 从 input 目录查找文件
+        # Find file from input directory
         input_files = list(skill.input_dir.glob("*.epub")) + list(skill.input_dir.glob("*.txt"))
         if not input_files:
-            print(f"错误: 在 {skill.input_dir} 目录中未找到 EPUB 或 TXT 文件")
-            print(f"请将文件放入 {skill.input_dir} 目录，或使用 --input 参数指定文件路径")
+            print(f"Error: No EPUB or TXT files found in {skill.input_dir} directory")
+            print(f"Please place file in {skill.input_dir} directory, or use --input parameter to specify file path")
             return
         input_path = input_files[0]
-        print(f"从 input 目录找到文件: {input_path}")
+        print(f"Found file from input directory: {input_path}")
     
     skill.process(input_path)
 

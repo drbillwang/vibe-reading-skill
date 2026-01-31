@@ -4,300 +4,300 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![Gemini](https://img.shields.io/badge/AI-Gemini-orange)
 
-> **Vibe Reading — 在 AI 时代你真正要掌握的技能。**
+> **Vibe Reading — The skill you truly need to master in the AI era.**
 
-**一个智能阅读分析 Agent Skill，帮助用户快速理解大部头著作的核心内容。**
+**An intelligent reading analysis Agent Skill that helps users quickly understand the core content of voluminous works.**
 
 ---
 
-## 📖 Vision: 在噪信时代重获深度
+## 📖 Vision: Regaining Depth in the Age of Noise
 
-> **"好把旧书多读到，义言一出见英明。"**
+> **"Read old books well, and wisdom will emerge."**
 >
-> — 《推背图》
+> — *Tui Bei Tu* (Ancient Chinese Prophecy)
 
 <br/>
 
 > **"In the age of AI, output is cheap, but input is the real luxury."**
 
-在这个 AIGC 爆发的时代，信息的生成成本已趋近于零。我们被海量的、由算法生成的"快餐内容"所包围，而在这些数字噪音之外，那些 **Pre-AIGC 时代** 的经典著作——那些凝结了人类真实智慧与逻辑的结晶，却因为我们要面对的"信息过载"而在此刻变得难以触及。
+In this era of AIGC explosion, the cost of generating information has approached zero. We are surrounded by massive amounts of algorithmically generated "fast-food content," while beyond this digital noise, those **Pre-AIGC era** classics—those crystallizations of genuine human wisdom and logic—have become difficult to access due to the "information overload" we face.
 
-**Vibe Reading Skill** 的诞生，旨在解决这个时代的认知困境：**我们如何用有限的时间，去汲取无限的智慧？**
+**Vibe Reading Skill** was born to solve this era's cognitive dilemma: **How do we use limited time to absorb unlimited wisdom?**
 
-我们的目标不是替代阅读，而是**把书读薄**。
+Our goal is not to replace reading, but to **make books thinner**.
 
-### 核心哲学
+### Core Philosophy
 
-* **🛡️ 拒绝幻觉 (Zero Hallucination via Smart Chunking)**
-    AI 常被诟病存在"幻觉"，但在知识获取中这是不可接受的。本 Skill 采用严谨的 **Smart Chunking（智能分块）** 技术，强制 AI 仅基于当前切片的原文进行分析。这就像给 AI 戴上了"脚镣"，让它不再是天马行空的"创作者"，而是脚踏实地的"分析师"。
+* **🛡️ Zero Hallucination (via Smart Chunking)**
+    AI is often criticized for "hallucinations," which is unacceptable in knowledge acquisition. This Skill adopts rigorous **Smart Chunking** technology, forcing AI to analyze only based on the original text of the current slice. It's like putting "shackles" on AI, making it no longer a freewheeling "creator" but a down-to-earth "analyst."
 
-* **💎 挖掘 Pre-AIGC 的智慧**
-    真正的洞见往往深藏在大部头的长篇累牍中。通过 AI 的深度结构化分析，帮你过滤掉铺垫与冗余，直接提取出作者思想的骨架与核心逻辑，让"旧书"中的"义言"重见天日。
+* **💎 Mining Pre-AIGC Wisdom**
+    True insights are often hidden in voluminous works. Through AI's deep structured analysis, we help you filter out padding and redundancy, directly extracting the skeleton and core logic of the author's thoughts, allowing the "wisdom" in "old books" to see the light of day again.
 
-* **🗣️ 从"单向阅读"到"双向对话"**
-    阅读不应是孤独的苦旅。通过生成的 **交互式 HTML**，你可以随时就书中不懂的观点向 AI 提问。当阅读遇到障碍时，它就是你身边那位博学且耐心的导读导师。
-
----
-
-## ✨ 特性
-
-- 📚 **智能章节识别**：AI 自动识别书籍结构，无需手动配置
-- 🔄 **上下文连贯**：每章分析时参考前章总结，保持理解连贯
-- 📄 **多格式输出**：Markdown、PDF（自动生成封面）、HTML 交互界面
-- 🌍 **多语言支持**：自动识别和适配不同语言的书籍
-- 🤖 **AI 驱动**：完全由 AI 决策，适应任何格式的书籍
-- 🛡️ **智能重试机制**：自动处理 API 配额限制，遇到错误时自动重试（最多 5 次）
-- 📖 **自动封面生成**：从文件名自动提取书名和作者，生成专业 PDF 封面
+* **🗣️ From "One-Way Reading" to "Two-Way Dialogue"**
+    Reading should not be a lonely journey. Through the generated **interactive HTML**, you can ask AI questions about any unclear points in the book at any time. When reading encounters obstacles, it is the knowledgeable and patient reading guide by your side.
 
 ---
 
-## 📸 功能展示
+## ✨ Features
 
-### 📄 PDF 总结 - 把书读薄
+- 📚 **Intelligent Chapter Identification**: AI automatically identifies book structure, no manual configuration needed
+- 🔄 **Contextual Coherence**: Each chapter analysis references previous chapter summaries, maintaining coherent understanding
+- 📄 **Multiple Output Formats**: Markdown, PDF (auto-generated cover), HTML interactive interface
+- 🌍 **Multi-language Support**: Automatically identifies and adapts to books in different languages
+- 🤖 **AI-Driven**: Completely AI-driven decisions, adapting to books in any format
+- 🛡️ **Smart Retry Mechanism**: Automatically handles API quota limits, retries on errors (up to 5 times)
+- 📖 **Auto Cover Generation**: Automatically extracts book title and author from filename, generates professional PDF cover
 
-一键生成专业总结分析，如图所示：
+---
+
+## 📸 Feature Showcase
+
+### 📄 PDF Summary - Making Books Thinner
+
+Generate professional summary analysis with one click, as shown:
 
 <div align="center">
-  <img src="docs/images/pdf_cover.png" alt="PDF 封面" width="600"/>
-  <p><em>我最近在读奥古斯都传记，原书是个大部头的鸿篇巨著，有600页以上</em></p>
+  <img src="docs/images/pdf_cover.png" alt="PDF Cover" width="600"/>
+  <p><em>I'm currently reading a biography of Augustus, the original book is a voluminous masterpiece with over 600 pages</em></p>
   
-  <img src="docs/images/pdf_content.png" alt="PDF 内容" width="600"/>
-  <p><em>结构化分析后，干货总结为77页</em></p>
+  <img src="docs/images/pdf_content.png" alt="PDF Content" width="600"/>
+  <p><em>After structured analysis, the essence is condensed to 77 pages</em></p>
 </div>
 
-### 🌐 HTML 交互式阅读界面
+### 🌐 HTML Interactive Reading Interface
 
-通过交互式 HTML 界面，你可以：
-- 📖 浏览章节列表，快速定位内容
-- 💬 与 AI 进行问答对话，深入理解书中观点
-- 🔍 基于上下文获取精准回答
+Through the interactive HTML interface, you can:
+- 📖 Browse chapter list, quickly locate content
+- 💬 Have Q&A conversations with AI, deeply understand viewpoints in the book
+- 🔍 Get precise answers based on context
 
 <div align="center">
-  <img src="docs/images/html_main.png" alt="HTML 主界面" width="600"/>
-  <p><em>交互式阅读主界面</em></p>
+  <img src="docs/images/html_main.png" alt="HTML Main Interface" width="600"/>
+  <p><em>Interactive reading main interface</em></p>
   
-  <img src="docs/images/html_chapter.png" alt="HTML 章节阅读" width="600"/>
-  <p><em>章节阅读与导航</em></p>
+  <img src="docs/images/html_chapter.png" alt="HTML Chapter Reading" width="600"/>
+  <p><em>Chapter reading and navigation</em></p>
   
-  <img src="docs/images/html_qa.png" alt="HTML 问答功能" width="600"/>
-  <p><em>AI 问答对话功能</em></p>
+  <img src="docs/images/html_qa.png" alt="HTML Q&A Feature" width="600"/>
+  <p><em>AI Q&A conversation feature</em></p>
 </div>
 
-### 🤖 Agent Skill 运行过程
+### 🤖 Agent Skill Runtime
 
-智能处理流程，从章节识别到深度分析：
+Intelligent processing flow, from chapter identification to deep analysis:
 
 <div align="center">
-  <img src="docs/images/agent_processing.png" alt="Agent 处理过程" width="600"/>
-  <p><em>智能章节识别与拆分</em></p>
+  <img src="docs/images/agent_processing.png" alt="Agent Processing" width="600"/>
+  <p><em>Intelligent chapter identification and splitting</em></p>
   
-  <img src="docs/images/agent_verification.png" alt="Agent 验证" width="600"/>
-  <p><em>章节拆分完整性验证</em></p>
+  <img src="docs/images/agent_verification.png" alt="Agent Verification" width="600"/>
+  <p><em>Chapter splitting completeness verification</em></p>
   
-  <img src="docs/images/agent_analysis.png" alt="Agent 分析" width="600"/>
-  <p><em>逐章深度阅读与分析</em></p>
+  <img src="docs/images/agent_analysis.png" alt="Agent Analysis" width="600"/>
+  <p><em>Chapter-by-chapter deep reading and analysis</em></p>
 </div>
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 前置要求
+### Prerequisites
 
 - Python 3.8+
 - Google Gemini API Key
 
-### 安装
+### Installation
 
-#### 方式一：作为 Python Package 安装（推荐）
+#### Method 1: Install as Python Package (Recommended)
 
 ```bash
-# 从 GitHub 安装
-pip install git+https://github.com/drbillwang/vibe-reading-skill-CN.git
+# Install from GitHub
+pip install git+https://github.com/drbillwang/vibe-reading-skill.git
 
-# 或从本地安装（开发模式）
-git clone https://github.com/drbillwang/vibe-reading-skill-CN.git
-cd vibe-reading-skill-CN
+# Or install from local (development mode)
+git clone https://github.com/drbillwang/vibe-reading-skill.git
+cd vibe-reading-skill
 pip install -e .
 ```
 
-#### ⚠️ 重要：安装 PDF 生成依赖
+#### ⚠️ Important: Install PDF Generation Dependencies
 
-**PDF 生成功能需要 Playwright 和浏览器支持。** 如果未安装，PDF 生成会被跳过，但其他功能（Markdown、HTML）仍可正常使用。
+**PDF generation requires Playwright and browser support.** If not installed, PDF generation will be skipped, but other features (Markdown, HTML) will work normally.
 
-安装步骤：
+Installation steps:
 
 ```bash
-# 1. 安装 playwright（如果通过 pip install 安装本包，playwright 应该已经包含在依赖中）
+# 1. Install playwright (if installing this package via pip install, playwright should already be included in dependencies)
 pip install playwright
 
-# 2. 安装 Chromium 浏览器（这一步很重要！）
+# 2. Install Chromium browser (this step is important!)
 playwright install chromium
 ```
 
-**注意**：
-- 如果只运行了 `pip install playwright` 但没有运行 `playwright install chromium`，PDF 生成会失败
-- 安装浏览器需要一些时间（约 100-200MB 下载）
-- 如果不需要 PDF 功能，可以跳过此步骤，Markdown 和 HTML 输出不受影响
+**Note**:
+- If you only run `pip install playwright` but don't run `playwright install chromium`, PDF generation will fail
+- Installing the browser takes some time (approximately 100-200MB download)
+- If you don't need PDF functionality, you can skip this step, Markdown and HTML output are not affected
 
-### 配置
+### Configuration
 
-创建 `.env` 文件：
+Create a `.env` file:
 
 ```bash
 GEMINI_API_KEY=your_api_key_here
 
-# 可选：指定使用的模型（默认: gemini-2.5-pro）
-# 推荐模型：
-#   gemini-2.5-pro      - Gemini 2.5 旗舰模型（稳定可靠）⭐ 默认推荐
-#   gemini-3-pro        - Gemini 3 旗舰模型（最新，最强性能）
-#   gemini-3            - Gemini 3 标准模型
-#   gemini-2.5-flash    - Gemini 2.5 快速模型（速度快，成本低）
-#   gemini-1.5-pro      - 稳定版本（经过验证）
+# Optional: Specify the model to use (default: gemini-2.5-pro)
+# Recommended models:
+#   gemini-2.5-pro      - Gemini 2.5 flagship model (stable and reliable) ⭐ Default recommended
+#   gemini-3-pro        - Gemini 3 flagship model (latest, strongest performance)
+#   gemini-3            - Gemini 3 standard model
+#   gemini-2.5-flash    - Gemini 2.5 fast model (fast speed, low cost)
+#   gemini-1.5-pro      - Stable version (verified)
 GEMINI_MODEL=gemini-2.5-pro
 
-# 可选：代理配置（如果遇到 "User location is not supported" 错误）
+# Optional: Proxy configuration (if encountering "User location is not supported" error)
 # HTTP_PROXY=http://your_proxy_host:port
 # HTTPS_PROXY=http://your_proxy_host:port
 ```
 
-**模型选择**：
-- `gemini-2.5-pro`（默认）：稳定可靠，适合高质量分析
-- `gemini-2.5-flash`：速度快，成本低，适合快速处理或配额有限的情况
-- `gemini-1.5-pro`：稳定版本，经过验证
+**Model Selection**:
+- `gemini-2.5-pro` (default): Stable and reliable, suitable for high-quality analysis
+- `gemini-2.5-flash`: Fast speed, low cost, suitable for quick processing or limited quota situations
+- `gemini-1.5-pro`: Stable version, verified
 
-**提示**：
-- 如果遇到 API 配额限制（429 错误），可以：
-  1. 切换到 `gemini-2.5-flash` 模型（配额限制更宽松）
-  2. 等待一段时间后重试（系统会自动重试，最多 5 次，等待时间：60/90/120/150/180 秒）
-- 如果遇到 "User location is not supported" 错误，需要配置代理（见下方代理配置）
+**Tips**:
+- If encountering API quota limits (429 error), you can:
+  1. Switch to `gemini-2.5-flash` model (more lenient quota limits)
+  2. Wait a while and retry (system will automatically retry, up to 5 times, wait times: 90/120/150/180/210 seconds)
+- If encountering "User location is not supported" error, you need to configure proxy (see proxy configuration above)
 
-### 使用
+### Usage
 
-#### 基本使用：处理整本书
+#### Basic Usage: Process Entire Book
 
 ```python
-from vibe_reading_skill_CN import process_book
+from vibe_reading_skill import process_book
 
 result = process_book("your_book.epub")
-print(result["status"])  # 'success' 或 'error'
+print(result["status"])  # 'success' or 'error'
 ```
 
-#### 高级使用：从 summaries 目录生成 PDF
+#### Advanced Usage: Generate PDF from summaries Directory
 
-如果你已经有 summaries 目录，可以直接生成 PDF：
+If you already have a summaries directory, you can directly generate PDF:
 
 ```python
-from vibe_reading_skill_CN import generate_pdf_from_summaries
+from vibe_reading_skill import generate_pdf_from_summaries
 from pathlib import Path
 
-# 从 summaries 目录生成 PDF（自动提取书名和作者）
+# Generate PDF from summaries directory (auto-extract book title and author)
 generate_pdf_from_summaries(
     summaries_dir=Path("./summaries"),
     output_path=Path("./book_summary.pdf"),
-    book_title="书籍标题",  # 可选，如果不提供会从文件名自动提取
-    book_subtitle="副标题（可选）",
-    book_author="作者名称（可选）",  # 可选，如果不提供会从文件名自动提取
-    skip_files=['Front_Matter', 'Authors_Note'],  # 可选：跳过某些文件
-    auto_extract_title=True,  # 默认 True，自动从文件名提取书名和作者
-    include_all_md=False  # 默认 False，只处理 *_summary.md 文件
+    book_title="Book Title",  # Optional, if not provided will auto-extract from filename
+    book_subtitle="Subtitle (optional)",
+    book_author="Author Name (optional)",  # Optional, if not provided will auto-extract from filename
+    skip_files=['Front_Matter', 'Authors_Note'],  # Optional: skip certain files
+    auto_extract_title=True,  # Default True, auto-extract book title and author from filename
+    include_all_md=False  # Default False, only process *_summary.md files
 )
 ```
 
-**封面生成**：
-- 如果 `summaries/` 目录中存在 `00_Cover.md` 或 `00_Cover` 文件，会优先使用它作为封面
-- 如果没有封面文件，会自动从输入文件名提取书名和作者，生成封面
-- 封面会自动包含在生成的 PDF 中
+**Cover Generation**:
+- If `00_Cover.md` or `00_Cover` file exists in the `summaries/` directory, it will be used as the cover
+- If no cover file exists, it will automatically extract book title and author from the input filename and generate a cover
+- The cover will be automatically included in the generated PDF
 
-## 工作流程
+## Workflow
 
-1. **文档预处理**：EPUB → TXT 转换（如需要）
-2. **智能章节识别**：AI 自动识别章节结构（支持大文档的渐进式预览策略）
-3. **进一步拆分**：AI 评估章节长度，必要时拆分
-4. **逐章分析**：AI 深度阅读每章，生成总结（带智能重试机制）
-5. **格式输出**：生成 Markdown、PDF（自动生成封面）、HTML
+1. **Document Preprocessing**: EPUB → TXT conversion (if needed)
+2. **Intelligent Chapter Identification**: AI automatically identifies chapter structure (supports progressive preview strategy for large documents)
+3. **Further Breakdown**: AI evaluates chapter length and splits if necessary
+4. **Chapter-by-Chapter Analysis**: AI deeply reads each chapter and generates summaries (with smart retry mechanism)
+5. **Format Output**: Generate Markdown, PDF (auto-generated cover), HTML
 
-### 智能重试机制
+### Smart Retry Mechanism
 
-当遇到 API 配额限制（429 错误）时，系统会：
-- 自动检测错误类型
-- 尝试从错误信息中提取建议的等待时间
-- 如果没有建议时间，使用预定义的延迟序列：60 → 90 → 120 → 150 → 180 秒
-- 每次遇到错误时，最多重试 5 次
-- 每个 API 调用都有独立的重试机会
+When encountering API quota limits (429 error), the system will:
+- Automatically detect error type
+- Try to extract suggested wait time from error message
+- If no suggested time, use predefined delay sequence: 90 → 120 → 150 → 180 → 210 seconds
+- Retry up to 5 times for each error
+- Each API call has independent retry opportunities
 
-### 自动封面生成
+### Auto Cover Generation
 
-PDF 生成时会自动：
-- 从输入文件名提取书名和作者（支持 `书名 -- 作者` 或 `书名 - 作者` 格式）
-- 如果没有封面文件，自动生成专业封面
-- 如果存在 `00_Cover.md` 或 `00_Cover` 文件，优先使用它
+PDF generation will automatically:
+- Extract book title and author from input filename (supports `Book Title -- Author` or `Book Title - Author` format)
+- If no cover file exists, automatically generate professional cover
+- If `00_Cover.md` or `00_Cover` file exists, prioritize using it
 
-## 输出目录
+## Output Directories
 
-处理完成后会在当前目录创建以下输出目录：
+After processing completes, the following output directories will be created in the current directory:
 
-- `chapters/` - 拆分好的章节原文
-- `summaries/` - 章节总结（Markdown）
-- `pdf/` - PDF 输出（需要安装 Playwright 和 Chromium，见上方安装说明）
-- `html/` - HTML 交互界面
+- `chapters/` - Split chapter original text
+- `summaries/` - Chapter summaries (Markdown)
+- `pdf/` - PDF output (requires Playwright and Chromium installation, see installation instructions above)
+- `html/` - HTML interactive interface
 
-## 设计理念
+## Design Philosophy
 
-本 Skill 采用 **AI 驱动，而非代码驱动** 的设计理念：
+This Skill adopts an **AI-driven, not code-driven** design philosophy:
 
-- ✅ **AI 负责所有决策**：章节识别、拆分策略、分析重点等都由 AI 根据具体情况判断
-- ✅ **代码只做执行**：代码只负责执行 AI 的决策（文件读写、格式转换等）
-- ✅ **智能错误处理**：AI 生成的代码如果执行失败，会让 AI 看到错误并重新生成，直到成功
-- ✅ **渐进式预览**：处理大文档时，逐步减少预览内容，避免超过 token 限制
-- ❌ **避免硬编码规则**：不预设"如果遇到 X 就做 Y"的规则
+- ✅ **AI Makes All Decisions**: Chapter identification, splitting strategy, analysis focus, etc., are all judged by AI based on specific situations
+- ✅ **Code Only Executes**: Code only executes AI's decisions (file I/O, format conversion, etc.)
+- ✅ **Smart Error Handling**: If AI-generated code execution fails, AI will see the error and regenerate until successful
+- ✅ **Progressive Preview**: When processing large documents, gradually reduce preview content to avoid exceeding token limits
+- ❌ **Avoid Hard-coded Rules**: No preset "if X then Y" rules
 
-这使得 Skill 可以处理任何格式、任何语言的书籍，无需为每种新格式编写代码。
+This allows the Skill to handle books in any format and any language without writing code for each new format.
 
-### 错误处理策略
+### Error Handling Strategy
 
-1. **章节识别代码执行失败**：AI 会看到错误信息，分析问题并重新生成代码，最多重试 3 次
-2. **API 配额限制**：自动重试，等待时间逐步增加（60/90/120/150/180 秒），最多 5 次
-3. **大文档处理**：使用渐进式预览策略，逐步减少发送给 AI 的内容，直到成功
+1. **Chapter Identification Code Execution Failure**: AI will see error information, analyze the problem and regenerate code, retry up to 3 times
+2. **API Quota Limits**: Automatic retry, wait time gradually increases (90/120/150/180/210 seconds), up to 5 times
+3. **Large Document Processing**: Use progressive preview strategy, gradually reduce content sent to AI until successful
 
-## 贡献
+## Contributing
 
-欢迎贡献！请提交 Issue 或 Pull Request。
+Contributions are welcome! Please submit Issues or Pull Requests.
 
-## 许可证
+## License
 
-Apache 2.0 License - 详见 [LICENSE](LICENSE)
+Apache 2.0 License - See [LICENSE](LICENSE) for details
 
-## 作为 Skill 使用
+## Using as a Skill
 
-本项目已配置为标准的 Python Skill，可以：
+This project is configured as a standard Python Skill and can:
 
-- ✅ 通过 `pip install` 安装
-- ✅ 在 IDE 中直接调用
+- ✅ Be installed via `pip install`
+- ✅ Be called directly in IDE
 
-### Skill 调用示例
+### Skill Call Example
 
 ```python
-from vibe_reading_skill_CN import process_book
+from vibe_reading_skill import process_book
 
-# 基本调用
+# Basic call
 result = process_book("book.epub")
 
-# 查看结果
+# View results
 if result["status"] == "success":
-    print(f"处理完成！章节数: {result['metadata']['chapter_count']}")
+    print(f"Processing complete! Chapter count: {result['metadata']['chapter_count']}")
     print(f"PDF: {result['output_paths']['pdf']}")
     print(f"HTML: {result['output_paths']['html']}")
 else:
-    print(f"错误: {result['message']}")
+    print(f"Error: {result['message']}")
 ```
 
-### 返回值格式
+### Return Value Format
 
 ```python
 {
-    "status": "success",  # 或 "error"
-    "message": "书籍处理完成",
+    "status": "success",  # or "error"
+    "message": "Book processing complete",
     "output_paths": {
         "chapters": "chapters/",
         "summaries": "summaries/",
@@ -305,40 +305,40 @@ else:
         "html": "html/interactive_reader.html"
     },
     "metadata": {
-        "book_title": "书籍标题",
+        "book_title": "Book Title",
         "chapter_count": 10,
         "processing_time": 123.45
     }
 }
 ```
 
-## 常见问题
+## FAQ
 
-### Q: 遇到 "User location is not supported" 错误怎么办？
+### Q: What to do when encountering "User location is not supported" error?
 
-A: 需要在 `.env` 文件中配置代理：
+A: You need to configure proxy in the `.env` file:
 ```bash
 HTTP_PROXY=http://your_proxy_host:port
 HTTPS_PROXY=http://your_proxy_host:port
 ```
 
-### Q: PDF 生成失败，提示 "playwright 未安装"？
+### Q: PDF generation failed, prompting "playwright not installed"?
 
-A: 需要完成两步安装：
+A: You need to complete two-step installation:
 1. `pip install playwright`
-2. `playwright install chromium` ← 这一步很重要！
+2. `playwright install chromium` ← This step is important!
 
-### Q: 遇到 API 配额限制（429 错误）？
+### Q: Encountering API quota limits (429 error)?
 
-A: 系统会自动重试（最多 5 次），也可以：
-1. 切换到 `gemini-2.5-flash` 模型（配额限制更宽松）
-2. 等待一段时间后重新运行
+A: The system will automatically retry (up to 5 times), or you can:
+1. Switch to `gemini-2.5-flash` model (more lenient quota limits)
+2. Wait a while and rerun
 
-### Q: 如何自定义 PDF 封面？
+### Q: How to customize PDF cover?
 
-A: 在 `summaries/` 目录中创建 `00_Cover.md` 文件，第一行是书名，后续行是其他信息（作者、日期等）
+A: Create a `00_Cover.md` file in the `summaries/` directory, first line is the book title, subsequent lines are other information (author, date, etc.)
 
-## 相关链接
+## Related Links
 
-- [Skill 指令](SKILL.md) - AI 处理指令
-- [环境变量示例](env.example) - 完整的配置示例
+- [Skill Instructions](SKILL.md) - AI processing instructions
+- [Environment Variable Example](env.example) - Complete configuration example

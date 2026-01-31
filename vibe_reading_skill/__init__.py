@@ -1,8 +1,8 @@
 """
-Vibe Reading Skill - 智能阅读分析 Agent Skill
+Vibe Reading Skill - Intelligent Reading Analysis Agent Skill
 
-一个 AI 驱动的书籍阅读分析工具，能够智能识别章节、深度分析内容，
-并生成多格式输出（Markdown、PDF、HTML）。
+An AI-driven book reading analysis tool that can intelligently identify chapters, deeply analyze content,
+and generate multiple format outputs (Markdown, PDF, HTML).
 """
 
 from pathlib import Path
@@ -23,35 +23,35 @@ def process_book(
     **options: Any
 ) -> Dict[str, Any]:
     """
-    Skill 主入口函数 - 处理书籍并生成分析报告
+    Skill main entry function - Process book and generate analysis report
     
-    这是 skill 的标准接口，可以被 IDE 或 skill 市场调用。
+    This is the standard interface for the skill, which can be called by IDE or skill marketplace.
     
-    功能特性：
-    - 智能章节识别：AI 自动识别书籍结构，支持大文档的渐进式预览
-    - 自动封面生成：从文件名提取书名和作者，生成专业 PDF 封面
-    - 智能重试机制：遇到 API 配额限制时自动重试（最多 5 次，等待 60/90/120/150/180 秒）
-    - 错误自动修复：AI 生成的代码执行失败时，会让 AI 看到错误并重新生成
+    Features:
+    - Intelligent chapter identification: AI automatically identifies book structure, supports progressive preview for large documents
+    - Auto cover generation: Extract book title and author from filename, generate professional PDF cover
+    - Smart retry mechanism: Automatically retry when encountering API quota limits (up to 5 times, wait 90/120/150/180/210 seconds)
+    - Auto error fixing: When AI-generated code execution fails, AI will see the error and regenerate
     
     Args:
-        input_path: 输入文件路径（EPUB 或 TXT 格式）
-        output_dir: 输出目录（可选，默认使用项目目录结构）
-        api_key: Gemini API Key（可选，也可通过环境变量设置）
-        model: 使用的 Gemini 模型（可选，默认 gemini-2.5-pro）
-        **options: 其他选项
-            - generate_pdf: 是否生成 PDF（默认 True，需要安装 playwright 和 chromium）
-            - generate_html: 是否生成 HTML（默认 True）
-            - base_dir: 项目根目录（默认当前目录）
+        input_path: Input file path (EPUB or TXT format)
+        output_dir: Output directory (optional, default uses project directory structure)
+        api_key: Gemini API Key (optional, can also be set via environment variable)
+        model: Gemini model to use (optional, default gemini-2.5-pro)
+        **options: Other options
+            - generate_pdf: Whether to generate PDF (default True, requires playwright and chromium installation)
+            - generate_html: Whether to generate HTML (default True)
+            - base_dir: Project root directory (default current directory)
     
     Returns:
-        Dict 包含处理结果：
+        Dict containing processing results:
         {
             "status": "success" | "error",
-            "message": "处理完成" | 错误信息,
+            "message": "Processing complete" | error message,
             "output_paths": {
                 "chapters": "chapters/",
                 "summaries": "summaries/",
-                "pdf": "pdf/book_summary.pdf",  # 如果生成成功
+                "pdf": "pdf/book_summary.pdf",  # If generated successfully
                 "html": "html/interactive_reader.html"
             },
             "metadata": {
@@ -67,12 +67,12 @@ def process_book(
         'success'
         >>> if result["status"] == "success":
         ...     print(f"PDF: {result['output_paths']['pdf']}")
-        ...     print(f"章节数: {result['metadata']['chapter_count']}")
+        ...     print(f"Chapter count: {result['metadata']['chapter_count']}")
     
     Note:
-        - 如果遇到 API 配额限制（429 错误），系统会自动重试
-        - PDF 生成需要安装 playwright 和 chromium（详见 README.md）
-        - 封面会自动从文件名提取，或使用 summaries/00_Cover.md 文件
+        - If encountering API quota limits (429 error), system will automatically retry
+        - PDF generation requires playwright and chromium installation (see README.md for details)
+        - Cover will be automatically extracted from filename, or use summaries/00_Cover.md file
     """
     import time
     from pathlib import Path
@@ -80,36 +80,36 @@ def process_book(
     start_time = time.time()
     
     try:
-        # 解析参数
+        # Parse parameters
         input_file = Path(input_path)
         if not input_file.exists():
             return {
                 "status": "error",
-                "message": f"输入文件不存在: {input_path}",
+                "message": f"Input file does not exist: {input_path}",
                 "output_paths": {},
                 "metadata": {}
             }
         
-        # 确定输出目录
+        # Determine output directory
         if output_dir:
             base_dir = Path(output_dir)
         else:
             base_dir = options.get("base_dir", Path("."))
         
-        # 创建 skill 实例
+        # Create skill instance
         skill = VibeReadingSkill(
             api_key=api_key,
             base_dir=base_dir,
             model=model
         )
         
-        # 处理书籍
+        # Process book
         skill.process(input_file)
         
-        # 收集输出路径
+        # Collect output paths
         processing_time = time.time() - start_time
         
-        # 尝试获取书籍标题
+        # Try to get book title
         book_title = "Book Summary"
         summary_files = list(skill.summaries_dir.glob("*.md"))
         if summary_files:
@@ -125,7 +125,7 @@ def process_book(
         
         return {
             "status": "success",
-            "message": "书籍处理完成",
+            "message": "Book processing complete",
             "output_paths": {
                 "chapters": str(skill.chapters_dir),
                 "summaries": str(skill.summaries_dir),
@@ -143,14 +143,14 @@ def process_book(
         import traceback
         return {
             "status": "error",
-            "message": f"处理失败: {str(e)}",
+            "message": f"Processing failed: {str(e)}",
             "error_details": traceback.format_exc(),
             "output_paths": {},
             "metadata": {}
         }
 
 
-# 导出主要类和函数
+# Export main classes and functions
 __all__ = [
     "VibeReadingSkill",
     "process_book",

@@ -2,7 +2,7 @@
   "id": "vibe-reading-skill",
   "name": "Vibe Reading Skill",
   "version": "0.1.0",
-  "description": "智能阅读分析 Agent Skill，帮助用户快速理解大部头著作的核心内容。通过 AI 的深度阅读和结构化分析，将整本书转化为易于消化的总结报告。",
+  "description": "Intelligent reading analysis Agent Skill that helps users quickly understand the core content of voluminous works. Through AI's deep reading and structured analysis, transforms entire books into digestible summary reports.",
   "author": "Your Name",
   "license": "Apache-2.0",
   "repository": {
@@ -10,32 +10,32 @@
     "url": "https://github.com/yourusername/vibe-reading-skill.git"
   },
   "entry_point": {
-    "module": "vibe_reading_skill_CN",
+    "module": "vibe_reading_skill",
     "function": "process_book"
   },
   "parameters": {
     "input_path": {
       "type": "string",
       "required": true,
-      "description": "输入文件路径（EPUB 或 TXT 格式）",
+      "description": "Input file path (EPUB or TXT format)",
       "example": "book.epub"
     },
     "output_dir": {
       "type": "string",
       "required": false,
-      "description": "输出目录（可选，默认使用项目目录结构）",
+      "description": "Output directory (optional, default uses project directory structure)",
       "default": null
     },
     "api_key": {
       "type": "string",
       "required": false,
-      "description": "Gemini API Key（可选，也可通过环境变量 GEMINI_API_KEY 设置）",
+      "description": "Gemini API Key (optional, can also be set via environment variable GEMINI_API_KEY)",
       "default": null
     },
     "model": {
       "type": "string",
       "required": false,
-      "description": "使用的 Gemini 模型（可选，默认 gemini-2.5-pro）",
+      "description": "Gemini model to use (optional, default gemini-2.5-pro)",
       "default": "gemini-2.5-pro",
       "options": [
         "gemini-3-pro",
@@ -52,49 +52,49 @@
     "properties": {
       "status": {
         "type": "string",
-        "description": "处理状态：'success' 或 'error'"
+        "description": "Processing status: 'success' or 'error'"
       },
       "message": {
         "type": "string",
-        "description": "处理结果消息"
+        "description": "Processing result message"
       },
       "output_paths": {
         "type": "object",
-        "description": "输出文件路径",
+        "description": "Output file paths",
         "properties": {
           "chapters": {
             "type": "string",
-            "description": "章节文件目录"
+            "description": "Chapter file directory"
           },
           "summaries": {
             "type": "string",
-            "description": "总结文件目录"
+            "description": "Summary file directory"
           },
           "pdf": {
             "type": "string",
-            "description": "PDF 文件路径（如果生成）"
+            "description": "PDF file path (if generated)"
           },
           "html": {
             "type": "string",
-            "description": "HTML 文件路径（如果生成）"
+            "description": "HTML file path (if generated)"
           }
         }
       },
       "metadata": {
         "type": "object",
-        "description": "处理元数据",
+        "description": "Processing metadata",
         "properties": {
           "book_title": {
             "type": "string",
-            "description": "书籍标题"
+            "description": "Book title"
           },
           "chapter_count": {
             "type": "integer",
-            "description": "章节数量"
+            "description": "Chapter count"
           },
           "processing_time": {
             "type": "number",
-            "description": "处理时间（秒）"
+            "description": "Processing time (seconds)"
           }
         }
       }
@@ -110,12 +110,12 @@
     ]
   },
   "features": [
-    "智能章节识别",
-    "AI 驱动的深度分析",
-    "上下文连贯理解",
-    "多格式输出（Markdown、PDF、HTML）",
-    "多语言支持",
-    "交互式问答界面"
+    "Intelligent chapter identification",
+    "AI-driven deep analysis",
+    "Contextual coherent understanding",
+    "Multiple format output (Markdown, PDF, HTML)",
+    "Multi-language support",
+    "Interactive Q&A interface"
   ],
   "tags": [
     "reading",
