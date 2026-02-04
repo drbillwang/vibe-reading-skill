@@ -59,10 +59,10 @@ Generate professional summary analysis with one click, as shown:
 
 <div align="center">
   <img src="docs/images/pdf_cover.png" alt="PDF Cover" width="600"/>
-  <p><em>I'm currently reading a biography of Augustus, the original book is a voluminous masterpiece with over 600 pages</em></p>
+  <p><em>I'm currently reading a book on the Knights Templar, the original book is a voluminous masterpiece with c.700 pages</em></p>
   
   <img src="docs/images/pdf_content.png" alt="PDF Content" width="600"/>
-  <p><em>After structured analysis, the essence is condensed to 77 pages</em></p>
+  <p><em>After structured analysis, the essence is condensed to 113 pages</em></p>
 </div>
 
 ### 🌐 HTML Interactive Reading Interface
