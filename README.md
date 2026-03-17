@@ -349,6 +349,8 @@ This project now includes an **OpenClaw-compatible skill** in the `openclaw/` di
 clawhub install vibe-reading
 ```
 
+ClawHub: https://clawhub.ai/skills/vibe-reading
+
 ### Or manually
 
 Copy the `openclaw/` directory to your OpenClaw workspace skills folder:
