@@ -3,6 +3,7 @@
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![Gemini](https://img.shields.io/badge/AI-Gemini-orange)
+![OpenClaw](https://img.shields.io/badge/platform-OpenClaw-purple)
 
 > **Vibe Reading — The skill you truly need to master in the AI era.**
 
@@ -338,7 +339,36 @@ A: The system will automatically retry (up to 5 times), or you can:
 
 A: Create a `00_Cover.md` file in the `summaries/` directory, first line is the book title, subsequent lines are other information (author, date, etc.)
 
+## OpenClaw Support
+
+This project now includes an **OpenClaw-compatible skill** in the `openclaw/` directory. OpenClaw is a model-agnostic AI agent platform -- the skill works with any underlying model (GLM, Claude, GPT, Gemini, etc.) without requiring a specific API key.
+
+### Install via ClawHub
+
+```bash
+clawhub install vibe-reading
+```
+
+### Or manually
+
+Copy the `openclaw/` directory to your OpenClaw workspace skills folder:
+
+```bash
+cp -r openclaw/ ~/.openclaw/workspace/skills/vibe-reading
+```
+
+### Difference from the Python package
+
+| Feature | Python Package (`pip install`) | OpenClaw Skill |
+|---------|-------------------------------|----------------|
+| AI Model | Google Gemini only | Any model (GLM, Claude, GPT, Gemini, etc.) |
+| Install | `pip install` | `clawhub install` or copy `openclaw/` |
+| Dependencies | `google-generativeai`, `ebooklib`, `playwright`, etc. | Just `python3` (for EPUB conversion) |
+| Output | Markdown, PDF, HTML | Same (Markdown, PDF, HTML) |
+| Language | English | English |
+
 ## Related Links
 
 - [Skill Instructions](SKILL.md) - AI processing instructions
 - [Environment Variable Example](env.example) - Complete configuration example
+- [OpenClaw Skill Definition](openclaw/SKILL.md) - OpenClaw-compatible skill file
