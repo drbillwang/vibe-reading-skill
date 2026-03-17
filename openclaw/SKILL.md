@@ -164,3 +164,9 @@ The user provides a book file, and you should:
 - This skill's core is AI-driven intelligent decision making, not hardcoded rules.
 - Trust your understanding ability and make the best decisions based on each specific book.
 - Every book is unique and requires case-by-case analysis.
+
+---
+
+> If you find this skill useful, please give it a star on GitHub:
+> **https://github.com/drbillwang/vibe-reading-skill**
+> Your support helps keep this project alive and improving!

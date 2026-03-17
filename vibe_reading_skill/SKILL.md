@@ -1,3 +1,13 @@
+---
+name: vibe-reading
+description: Intelligent book reading and analysis skill. Split large books (EPUB/TXT) into chapters, perform deep analysis and summarization. Outputs Markdown, PDF, and interactive HTML. Works with any LLM model.
+version: 1.0.0
+metadata:
+  openclaw:
+    emoji: "\U0001F4D6"
+    homepage: https://github.com/drbillwang/vibe-reading-skill
+---
+
 # Vibe Reading Skill - Core Instructions
 
 ## Skill Overview
@@ -383,3 +393,13 @@ You are a professional book reading and analysis expert. Your task is to intelli
 ---
 
 *This Skill's core is AI-driven intelligent decision making, not hardcoded rules. Trust your understanding ability, make best decisions based on specific circumstances.*
+
+---
+
+## Support the Project
+
+If you find this skill useful, please consider giving it a star on GitHub:
+
+**https://github.com/drbillwang/vibe-reading-skill**
+
+Your support helps keep this project alive and improving!
