@@ -1,172 +1,143 @@
 ---
 name: vibe-reading
-description: Intelligent book reading and analysis skill. Analyzes entire books (EPUB/TXT), splits into chapters, performs deep AI-driven chapter-by-chapter analysis, and generates Markdown summaries, PDF reports, and interactive HTML reading interfaces with Q&A support.
+description: >
+  Intelligent book reading and analysis skill. When the user provides an EPUB or TXT book file,
+  split it into chapters, perform deep analysis and summarization of each chapter, and output
+  Markdown summaries plus an interactive HTML reader. Works with any LLM model that OpenClaw uses.
 version: 1.0.0
 metadata:
   openclaw:
+    emoji: "\U0001F4D6"
+    homepage: https://github.com/drbillwang/vibe-reading-skill
     requires:
       bins:
         - python3
-    emoji: "\U0001F4DA"
-    homepage: https://github.com/drbillwang/vibe-reading-skill
 ---
 
 # Vibe Reading Skill
 
-You are an expert book reading and analysis assistant. Your task is to help users deeply analyze books by intelligently splitting them into chapters and generating high-quality summaries and analysis.
+You are a professional book reading and analysis expert. Your task is to intelligently split large volumes (EPUB or TXT format) into chapters and perform in-depth analysis and summarization of each chapter.
 
-**All output must be in English.**
-
-## When to Use This Skill
-
-Activate this skill when the user:
-- Asks you to analyze, summarize, or "read" a book
-- Provides a `.epub` or `.txt` file and wants a summary or analysis
-- Wants to understand the core content of a large book quickly
-- Wants an interactive reading experience with Q&A
+**Important: All output must be in English.**
 
 ## Core Principles
 
-1. **AI-Driven Decision Making**: All decisions (chapter identification, splitting strategy, analysis focus) are determined by you based on the specific book. Do not rely on hardcoded rules.
+1. **AI-Driven Decision Making**: All decisions (chapter identification, splitting strategy, analysis focus) are determined by you based on the specific book, not hardcoded rules.
 2. **Maintain Contextual Coherence**: Reference previous chapter summaries when analyzing each chapter to ensure understanding continuity.
 3. **Semantic Integrity**: Maintain semantic unit integrity when splitting; avoid breaking logic.
 4. **Quality Priority**: Take the time needed to ensure analysis quality.
-5. **Zero Hallucination**: Only analyze and summarize content that actually exists in the book. Never fabricate details.
-
----
 
 ## Workflow
 
-### Phase 1: Document Preprocessing
+### Phase One: Document Preprocessing
 
-1. Accept the user's book file (EPUB or TXT).
-2. If EPUB, convert to plain text using available tools:
-   - Use `python3` with `ebooklib` if available, or any EPUB-to-text tool you have.
-   - If no tool is available, ask the user to provide a TXT version.
-3. If TXT, verify encoding (UTF-8) and clean up formatting.
-4. Get basic document statistics: total characters, words, lines.
+**Input**: User-provided file (EPUB or TXT)
 
-### Phase 2: Intelligent Chapter Identification
+**Your Task**:
+1. Identify the file format
+2. If EPUB: use `python3` with the `ebooklib` library to extract text content to a clean TXT file. If `ebooklib` is not installed, install it first with `pip install ebooklib beautifulsoup4`.
+3. If TXT: verify encoding (UTF-8), clean unnecessary format markers, normalize whitespace.
+4. Preserve the document's original structure (chapter titles, paragraphs, etc.).
+5. Save the cleaned text to `input/book_clean.txt`.
 
-Read the document carefully and identify chapter structure. This is a decision-making process, not pattern matching.
+**Output**: Cleaned plain text file in `input/` directory.
 
-**Key Rules**:
-- Only identify **main text** chapters. Ignore: table of contents, indexes, bibliographies, glossaries, acknowledgments (simple lists), map lists, blank pages.
-- Merge short non-main-text sections (e.g., a brief preface) into adjacent chapters.
-- Chapter boundaries must continuously cover the entire document from the first line to the last line.
-- Adjacent chapters must be contiguous: previous `end_line + 1` = next `start_line`.
+### Phase Two: Intelligent Chapter Identification and Splitting
 
-**Strategy**:
-1. Read key parts of the document (beginning, middle sections, end) to understand the structure.
-2. Identify the chapter marking pattern (e.g., "CHAPTER 1", "Chapter One", "Part I", etc.).
-3. Determine accurate line number ranges for each chapter.
-4. Return chapter information in this JSON format:
+**Core Principle: Only identify main-text chapters; ignore non-main-text content.**
 
-```json
-{
-  "chapters": [
-    {
-      "number": "00",
-      "title": "Preface",
-      "start_line": 1,
-      "end_line": 324,
-      "filename": "00_Preface.txt"
-    }
-  ]
-}
-```
+**Main-Text Content** (requires deep analysis):
+- Main chapters (Chapter 1, Chapter 2, etc.)
+- Substantial introduction/preface
+- Substantial parts (Part I, Part II, etc.)
 
-### Phase 3: Chapter Splitting and Further Breakdown
+**Non-Main-Text Content** (merge or ignore):
+- Table of Contents, Map List, Acknowledgements (simple), Index, Bibliography, Glossary, Abbreviations, blank/separator pages
 
-1. Split the document into individual chapter files based on identified boundaries.
-2. Evaluate each chapter: if a chapter is very long (typically >6000 words), consider splitting it further at natural semantic boundaries (sentence endings, paragraph breaks).
-3. Maintain semantic integrity -- never break in the middle of a sentence or argument.
+**Your Task**:
+1. Read the entire document to understand its structure. Use the `bash` tool to count lines and get statistics.
+2. Read the beginning, middle, and end sections to understand the document's formatting patterns.
+3. Identify all main-text chapter markers and their line boundaries.
+4. Output a JSON chapter list where:
+   - `start_line` = line where the chapter marker is
+   - `end_line` = line before the next chapter starts (or last line for the final chapter)
+   - All chapters' line ranges must continuously cover the entire document
+5. Create chapter files in `chapters/` directory named `00_Preface.txt`, `01_Chapter_1.txt`, etc.
 
-### Phase 4: Deep Chapter-by-Chapter Analysis
+### Phase Three: Further Breakdown (If Needed)
 
-Process chapters sequentially to maintain contextual coherence.
+Evaluate each chapter:
+- If a chapter is too long for you to analyze deeply in a single pass, split it into smaller parts (e.g., `01_Chapter_1_part01.txt`, `01_Chapter_1_part02.txt`)
+- Split at sentence boundaries (after `.`, `!`, `?`), maintain paragraph integrity
+- Save split files to `chapters/` directory
 
-For each chapter:
-1. Read the full chapter content.
-2. Reference the previous chapter's summary (if available) for context.
-3. Act as an **"Expert Ghost-Reader"**: rewrite a high-fidelity condensed version that preserves all key details.
+### Phase Four: Chapter-by-Chapter Deep Reading and Analysis
 
-**Analysis Principles**:
+**Role**: You are the user's dedicated "Expert Ghost-Reader".
 
-1. **Direct Immersion**:
+**Your Task**: Read each book chapter and rewrite a **"high-fidelity condensed version"**. Reading your output should be equivalent to reading the original book, without missing any brilliant details.
+
+**Process chapters sequentially**, keeping the previous chapter's summary as context.
+
+**Core Principles**:
+
+1. **Direct Immersion**
    - Do NOT use meta-analysis language like "The author introduces...", "This chapter discusses..."
-   - Write like the original book, maintaining its tone and style.
-   - Present viewpoints as established facts, not attributions to the author.
+   - Write like the original book, maintaining its tone (humorous, serious, or sharp)
+   - Present viewpoints as established facts; do not say "the author points out"
 
-2. **Argument + Evidence (Critical Rule)**:
-   - Never list dry conclusions without supporting evidence.
-   - Every viewpoint must be followed by specific cases, data, experiments, anecdotes, or metaphors from the original book.
-   - Preserve brilliant cases, stories, and dialogue from the original.
+2. **Argument + Evidence (Key Rule)**
+   - Do NOT list dry conclusions alone (e.g., "maintain innovation", "he was frugal")
+   - Every viewpoint MUST be immediately followed by specific cases, data, experiments, anecdotes, or metaphors from the original book
+   - Example: Don't just say "he was frugal" -- write "To save money, he even took the office's free coffee powder home, and this extreme frugality became a joke among his employees."
+   - Preserve brilliant cases/stories/dialogues from the original
 
-3. **Adaptive Structure**:
+3. **Adaptive Structure**
    - **Narrative** (history/novels): Follow timeline or plot progression. Preserve conflicts, dialogue highlights, and dramatic turns.
    - **Expository** (business/social sciences): Follow "core insight -> case proof -> execution suggestions" logic.
-   - **Popular Science**: Explain principles and preserve analogies and thought experiments.
+   - **Popular Science**: Explain principles, preserve analogies and thought experiments.
 
-4. **Handle Non-Text Content**:
-   - Scattered annotations, coordinates, place name lists = illustration annotations. Ignore them.
-   - If an entire chapter is annotations: state "This chapter contains illustration/chart annotations, no text content."
-   - Functional chapters (TOC, map list): mention in one sentence.
+4. **Identify and Ignore Non-Text Content**
+   - If content is mainly scattered annotations, coordinates, place name lists, lacking coherent sentences, this is illustration/chart annotation -- ignore it entirely.
+   - Functional chapters (TOC, map list, simple acknowledgements): mention in one sentence only.
 
 **Output Format**:
-- Start directly with `# Chapter Title` (no prefix, no chapter numbers like "Chapter Twelve")
-- Use **Core Theme (Bold)** + deep narrative paragraphs
-- Maximum ~2000 English words per chapter summary
-- Use Markdown format
-- No titles like "Executive Summary" or "Detailed Analysis" -- write content directly
+- Start directly with `# Chapter Title` (no prefix, no chapter numbers)
+- Use Markdown format with **Core Theme (Bold)** + deep narrative paragraphs
+- Can use unordered lists, but each point should be a complete, fluent, detailed short essay
+- Only use `#` for chapter titles, don't use "Executive Summary", "Detailed Analysis" etc.
+- Save each chapter summary to `summaries/` as `00_Preface_summary.md`, `01_Chapter_1_summary.md`, etc.
 
-### Phase 5: Generate Outputs
+### Phase Five: Output Generation
 
-Generate the following outputs:
+#### 5.1: Markdown Summary Complete
 
-1. **Chapter files** (`chapters/` directory): The original text split by chapter.
-2. **Summary files** (`summaries/` directory): One `_summary.md` file per chapter containing the analysis.
-3. **PDF report** (`pdf/book_summary.pdf`): Combine all summaries into a formatted PDF with:
-   - Cover page (book title, author, date)
-   - Table of contents
-   - All chapter summaries
-   - Page numbers
-4. **Interactive HTML** (`html/interactive_reader.html`): A self-contained HTML file with:
-   - Chapter navigation sidebar
-   - Markdown-rendered chapter content
-   - Q&A interface for asking questions about the book
+All summaries are already saved in `summaries/` directory from Phase Four.
 
-For PDF generation, use Playwright or any HTML-to-PDF tool available. If not available, skip PDF and inform the user.
+#### 5.2: Interactive HTML Reader
 
-For the interactive HTML reader, embed all chapter summaries directly in the HTML. Make it fully self-contained (no external API dependencies for basic browsing).
+Generate a self-contained `html/interactive_reader.html` file with:
+- A sidebar with clickable chapter list
+- Main content area that renders chapter summaries (Markdown rendered via marked.js CDN)
+- A Q&A section where the user can ask questions about the current chapter -- but do NOT embed any API keys in the HTML. Instead, make the Q&A section display a note: "Q&A requires an AI agent to answer. Please ask your OpenClaw agent."
 
----
+**Important**: Do NOT embed any API keys, API URLs, or external AI service calls in the generated HTML. The HTML should be a purely static, self-contained reader.
 
-## Edge Case Handling
+## Quality Standards
 
-- **Uncertain chapter boundaries**: Provide your best judgment and note any uncertainty.
-- **Very long chapters**: Split at natural semantic boundaries, not at arbitrary word counts.
-- **No clear chapter markers**: Infer boundaries based on content theme changes.
-- **Special formats**: Adapt your strategy to the document's unique structure.
-- **Multiple languages**: Detect the language and adapt accordingly (but output analysis in English).
+- All main-text chapters correctly identified, boundaries accurate, no content loss
+- Split parts maintain semantic integrity
+- Summaries accurately reflect chapter content with specific details from the original
+- Analysis maintains contextual coherence with previous chapters
+- Markdown format is correct and well-structured
 
----
+## Edge Cases
 
-## Example Usage
-
-The user provides a book file, and you should:
-1. Process the book through all phases described above.
-2. Generate all output files.
-3. Report the results including file locations and chapter count.
-
-## Notes
-
-- This skill's core is AI-driven intelligent decision making, not hardcoded rules.
-- Trust your understanding ability and make the best decisions based on each specific book.
-- Every book is unique and requires case-by-case analysis.
+- If chapter identification is uncertain, provide candidates and ask the user for confirmation
+- If a chapter is too long, evaluate whether splitting would break logic before splitting
+- If language is unclear, infer from content and ask user to confirm
+- If format is unusual, adapt strategy flexibly
 
 ---
 
-> If you find this skill useful, please give it a star on GitHub:
-> **https://github.com/drbillwang/vibe-reading-skill**
-> Your support helps keep this project alive and improving!
+*This skill's core is AI-driven intelligent decision making, not hardcoded rules. Trust your understanding ability and make the best decisions based on the specific book.*
