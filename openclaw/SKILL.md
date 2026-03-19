@@ -4,7 +4,7 @@ description: >
   Intelligent book reading and analysis skill. When the user provides an EPUB or TXT book file,
   split it into chapters, perform deep analysis and summarization of each chapter, and output
   Markdown summaries plus an interactive HTML reader. Works with any LLM model that OpenClaw uses.
-version: 1.0.0
+version: 2.0.0
 metadata:
   openclaw:
     emoji: "\U0001F4D6"
@@ -12,6 +12,11 @@ metadata:
     requires:
       bins:
         - python3
+    install:
+      - kind: pip
+        package: ebooklib
+      - kind: pip
+        package: beautifulsoup4
 ---
 
 # Vibe Reading Skill
@@ -35,7 +40,7 @@ You are a professional book reading and analysis expert. Your task is to intelli
 
 **Your Task**:
 1. Identify the file format
-2. If EPUB: use `python3` with the `ebooklib` library to extract text content to a clean TXT file. If `ebooklib` is not installed, install it first with `pip install ebooklib beautifulsoup4`.
+2. If EPUB: write a Python script that uses the `ebooklib` and `beautifulsoup4` libraries (declared as dependencies in this skill) to extract text content from the EPUB file and save it as a clean TXT file. Run the script with `python3`.
 3. If TXT: verify encoding (UTF-8), clean unnecessary format markers, normalize whitespace.
 4. Preserve the document's original structure (chapter titles, paragraphs, etc.).
 5. Save the cleaned text to `input/book_clean.txt`.
@@ -55,7 +60,7 @@ You are a professional book reading and analysis expert. Your task is to intelli
 - Table of Contents, Map List, Acknowledgements (simple), Index, Bibliography, Glossary, Abbreviations, blank/separator pages
 
 **Your Task**:
-1. Read the entire document to understand its structure. Use the `bash` tool to count lines and get statistics.
+1. Read the entire document to understand its structure. Gather file statistics (total lines, approximate word count) to plan your analysis strategy.
 2. Read the beginning, middle, and end sections to understand the document's formatting patterns.
 3. Identify all main-text chapter markers and their line boundaries.
 4. Output a JSON chapter list where:
