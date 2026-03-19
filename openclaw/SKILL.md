@@ -4,7 +4,7 @@ description: >
   Intelligent book reading and analysis skill. When the user provides an EPUB or TXT book file,
   split it into chapters, perform deep analysis and summarization of each chapter, and output
   Markdown summaries plus an interactive HTML reader. Works with any LLM model that OpenClaw uses.
-version: 2.0.0
+version: 2.0.1
 metadata:
   openclaw:
     emoji: "\U0001F4D6"
